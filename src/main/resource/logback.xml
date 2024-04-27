@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!--  可见root基本设置中的格式介绍  -->
+    <property name="pattern"  value="%-5level %d{yyyy-MM-dd HH:mm:ss.SSS} %c %M %L [%thread] %m%n"/>
+
+    <!--  ********************  -->
+    <!--  配置ConsoleAppender  -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <!--  输出流对象  -->
+        <target>System.err</target>
+        <!--   日志格式配置   -->
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--   设置输出格式引用上面的键值对及输出的格式   -->
+            <pattern>${pattern}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 设置root，引用appender  -->
+    <root level="ALL">
+        <appender-ref ref="console"/>
+    </root>
+</configuration>
