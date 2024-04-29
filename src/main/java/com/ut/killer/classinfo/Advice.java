@@ -1,5 +1,7 @@
 package com.ut.killer.classinfo;
 
+import java.util.List;
+
 /**
  * 通知点 Created by vlinux on 15/5/20.
  */
@@ -9,7 +11,7 @@ public class Advice {
     private final Class<?> clazz;
     private final ArthasMethod method;
     private final Object target;
-    private final Object[] params;
+    private final List<ArgumentInfo> params;
     private final Object returnObj;
     private final Throwable throwExp;
     private final boolean isBefore;
@@ -36,9 +38,6 @@ public class Advice {
         return target;
     }
 
-    public Object[] getParams() {
-        return params;
-    }
 
     public Object getReturnObj() {
         return returnObj;
@@ -54,6 +53,10 @@ public class Advice {
 
     public ArthasMethod getMethod() {
         return method;
+    }
+
+    public List<ArgumentInfo> getParams() {
+        return params;
     }
 
     /**
@@ -73,7 +76,7 @@ public class Advice {
             Class<?> clazz,
             ArthasMethod method,
             Object target,
-            Object[] params,
+            List<ArgumentInfo> params,
             Object returnObj,
             Throwable throwExp,
             int access) {
@@ -93,7 +96,7 @@ public class Advice {
                                       Class<?> clazz,
                                       ArthasMethod method,
                                       Object target,
-                                      Object[] params) {
+                                      List<ArgumentInfo> params) {
         return new Advice(
                 loader,
                 clazz,
@@ -110,7 +113,7 @@ public class Advice {
                                               Class<?> clazz,
                                               ArthasMethod method,
                                               Object target,
-                                              Object[] params,
+                                              List<ArgumentInfo> params,
                                               Object returnObj) {
         return new Advice(
                 loader,
@@ -128,7 +131,7 @@ public class Advice {
                                              Class<?> clazz,
                                              ArthasMethod method,
                                              Object target,
-                                             Object[] params,
+                                             List<ArgumentInfo> params,
                                              Throwable throwExp) {
         return new Advice(
                 loader,
@@ -142,5 +145,4 @@ public class Advice {
         );
 
     }
-
 }

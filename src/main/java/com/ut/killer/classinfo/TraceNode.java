@@ -8,7 +8,6 @@ import java.util.List;
  * @author gongdewei 2020/4/28
  */
 public abstract class TraceNode {
-
     protected TraceNode parent;
     protected List<TraceNode> children;
 
@@ -17,38 +16,16 @@ public abstract class TraceNode {
      */
     private String type;
 
-    /**
-     * 备注
-     */
-    private String mark;
-    /**
-     * TODO marks数量的作用？是否可以去掉
-     */
-    private int marks = 0;
-
     public TraceNode(String type) {
         this.type = type;
     }
 
     public void addChild(TraceNode child) {
         if (children == null) {
-            children = new ArrayList<TraceNode>();
+            children = new ArrayList<>();
         }
         this.children.add(child);
         child.setParent(this);
-    }
-
-    public void setMark(String mark) {
-        this.mark = mark;
-        marks++;
-    }
-
-    public String getMark() {
-        return mark;
-    }
-
-    public Integer marks() {
-        return marks;
     }
 
     public void begin() {

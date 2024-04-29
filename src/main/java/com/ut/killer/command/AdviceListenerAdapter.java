@@ -1,9 +1,12 @@
 package com.ut.killer.command;
 
+import com.ut.killer.classinfo.ArgumentInfo;
 import com.ut.killer.classinfo.ArthasMethod;
+import com.ut.killer.classinfo.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -42,20 +45,21 @@ public abstract class AdviceListenerAdapter implements AdviceListener {
     }
 
     @Override
-    final public void before(Class<?> clazz, String methodName, String methodDesc, Object target, Object[] args)
+    final public void before(Class<?> clazz, String methodName, String methodDesc, Object target, Object[] args, String[] argNames)
             throws Throwable {
-        before(clazz.getClassLoader(), clazz, new ArthasMethod(clazz, methodName, methodDesc), target, args);
+        List<ArgumentInfo> arguments = ClassUtils.toArguments(args, argNames);
+        before(clazz.getClassLoader(), clazz, new ArthasMethod(clazz, methodName, methodDesc), target, arguments);
     }
 
     @Override
-    final public void afterReturning(Class<?> clazz, String methodName, String methodDesc, Object target, Object[] args,
+    final public void afterReturning(Class<?> clazz, String methodName, String methodDesc, Object target, List<ArgumentInfo> args,
                                      Object returnObject) throws Throwable {
         afterReturning(clazz.getClassLoader(), clazz, new ArthasMethod(clazz, methodName, methodDesc), target, args,
                 returnObject);
     }
 
     @Override
-    final public void afterThrowing(Class<?> clazz, String methodName, String methodDesc, Object target, Object[] args,
+    final public void afterThrowing(Class<?> clazz, String methodName, String methodDesc, Object target, List<ArgumentInfo> args,
                                     Throwable throwable) throws Throwable {
         afterThrowing(clazz.getClassLoader(), clazz, new ArthasMethod(clazz, methodName, methodDesc), target, args,
                 throwable);
@@ -71,7 +75,7 @@ public abstract class AdviceListenerAdapter implements AdviceListener {
      * @param args   参数列表
      * @throws Throwable 通知过程出错
      */
-    public abstract void before(ClassLoader loader, Class<?> clazz, ArthasMethod method, Object target, Object[] args)
+    public abstract void before(ClassLoader loader, Class<?> clazz, ArthasMethod method, Object target, List<ArgumentInfo> args)
             throws Throwable;
 
     /**
@@ -86,7 +90,7 @@ public abstract class AdviceListenerAdapter implements AdviceListener {
      * @throws Throwable 通知过程出错
      */
     public abstract void afterReturning(ClassLoader loader, Class<?> clazz, ArthasMethod method, Object target,
-                                        Object[] args, Object returnObject) throws Throwable;
+                                        List<ArgumentInfo> args, Object returnObject) throws Throwable;
 
     /**
      * 异常通知
@@ -100,7 +104,7 @@ public abstract class AdviceListenerAdapter implements AdviceListener {
      * @throws Throwable 通知过程出错
      */
     public abstract void afterThrowing(ClassLoader loader, Class<?> clazz, ArthasMethod method, Object target,
-                                       Object[] args, Throwable throwable) throws Throwable;
+                                       List<ArgumentInfo> args, Throwable throwable) throws Throwable;
 
     /**
      * 判断条件是否满足，满足的情况下需要输出结果

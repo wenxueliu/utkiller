@@ -3,10 +3,13 @@ package com.ut.killer.command;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ut.killer.classinfo.Advice;
+import com.ut.killer.classinfo.ArgumentInfo;
 import com.ut.killer.classinfo.ArthasMethod;
 import com.ut.killer.classinfo.TraceEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * @author ralf0131 2017-01-06 16:02.
@@ -14,7 +17,7 @@ import org.slf4j.LoggerFactory;
 public class AbstractTraceAdviceListener extends AdviceListenerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(AbstractTraceAdviceListener.class);
 
-    protected final ThreadLocal<TraceEntity> threadBoundEntity = new ThreadLocal<TraceEntity>();
+    protected final ThreadLocal<TraceEntity> threadBoundEntity = new ThreadLocal<>();
 
     /**
      * Constructor
@@ -37,23 +40,25 @@ public class AbstractTraceAdviceListener extends AdviceListenerAdapter {
     }
 
     @Override
-    public void before(ClassLoader loader, Class<?> clazz, ArthasMethod method, Object target, Object[] args)
+    public void before(ClassLoader loader, Class<?> clazz, ArthasMethod method, Object target, List<ArgumentInfo> args)
             throws Throwable {
+        // TODO 如果是私有方法，并且和 root 是同一个类，就继续，否则，结束
         TraceEntity traceEntity = threadLocalTraceEntity(loader);
-        traceEntity.tree.begin(clazz.getName(), method.getName(), -1, false);
+        final Advice advice = Advice.newForBefore(loader, clazz, method, target, args);
+        traceEntity.tree.begin(advice, -1, false);
         traceEntity.deep++;
     }
 
     @Override
-    public void afterReturning(ClassLoader loader, Class<?> clazz, ArthasMethod method, Object target, Object[] args,
+    public void afterReturning(ClassLoader loader, Class<?> clazz, ArthasMethod method, Object target, List<ArgumentInfo> args,
                                Object returnObject) throws Throwable {
-        threadLocalTraceEntity(loader).tree.end();
         final Advice advice = Advice.newForAfterReturning(loader, clazz, method, target, args, returnObject);
+        threadLocalTraceEntity(loader).tree.end();
         finishing(loader, advice);
     }
 
     @Override
-    public void afterThrowing(ClassLoader loader, Class<?> clazz, ArthasMethod method, Object target, Object[] args,
+    public void afterThrowing(ClassLoader loader, Class<?> clazz, ArthasMethod method, Object target, List<ArgumentInfo> args,
                               Throwable throwable) throws Throwable {
         int lineNumber = -1;
         StackTraceElement[] stackTrace = throwable.getStackTrace();
@@ -67,7 +72,6 @@ public class AbstractTraceAdviceListener extends AdviceListenerAdapter {
     }
 
     private void finishing(ClassLoader loader, Advice advice) {
-        System.out.println("trace info: ");
         // 本次调用的耗时
         TraceEntity traceEntity = threadLocalTraceEntity(loader);
         if (traceEntity.deep >= 1) { // #1817 防止deep为负数
@@ -93,8 +97,6 @@ public class AbstractTraceAdviceListener extends AdviceListenerAdapter {
                 }
             } catch (Throwable e) {
                 logger.warn("trace failed.", e);
-//                logger.error(1, "trace failed, condition is: " + command.getConditionExpress() + ", " + e.getMessage()
-//                        + ", visit log for more details.");
             } finally {
                 threadBoundEntity.remove();
             }

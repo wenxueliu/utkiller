@@ -58,7 +58,7 @@ public class ByteTransformer implements ClassFileTransformer {
         if (!classNameByDot.startsWith(targetClassName)) {
             return classfileBuffer;
         }
-
+        logger.info("enhance {}", classNameByDot);
         try {
             // 检查classloader能否加载到 SpyAPI，如果不能，则放弃增强
             try {
@@ -80,19 +80,20 @@ public class ByteTransformer implements ClassFileTransformer {
             // 生成增强字节码
             DefaultInterceptorClassParser defaultInterceptorClassParser = new DefaultInterceptorClassParser();
 
-            final List<InterceptorProcessor> interceptorProcessors = new ArrayList<InterceptorProcessor>();
+            final List<InterceptorProcessor> interceptorProcessors = new ArrayList<>();
 
             interceptorProcessors.addAll(defaultInterceptorClassParser.parse(SpyInterceptors.SpyInterceptor1.class));
             interceptorProcessors.addAll(defaultInterceptorClassParser.parse(SpyInterceptors.SpyInterceptor2.class));
             interceptorProcessors.addAll(defaultInterceptorClassParser.parse(SpyInterceptors.SpyInterceptor3.class));
 
-            interceptorProcessors.addAll(defaultInterceptorClassParser.parse(SpyInterceptors.SpyTraceExcludeJDKInterceptor1.class));
-            interceptorProcessors.addAll(defaultInterceptorClassParser.parse(SpyInterceptors.SpyTraceExcludeJDKInterceptor2.class));
-            interceptorProcessors.addAll(defaultInterceptorClassParser.parse(SpyInterceptors.SpyTraceExcludeJDKInterceptor3.class));
+//            interceptorProcessors.addAll(defaultInterceptorClassParser.parse(SpyInterceptors.SpyTraceExcludeJDKInterceptor1.class));
+//            interceptorProcessors.addAll(defaultInterceptorClassParser.parse(SpyInterceptors.SpyTraceExcludeJDKInterceptor2.class));
+//            interceptorProcessors.addAll(defaultInterceptorClassParser.parse(SpyInterceptors.SpyTraceExcludeJDKInterceptor3.class));
 
-            List<MethodNode> matchedMethods = new ArrayList<MethodNode>();
+            List<MethodNode> matchedMethods = new ArrayList<>();
             for (MethodNode methodNode : classNode.methods) {
-                if (methodNode.name.equals(methodName)) {
+                logger.info("methodName: {}", methodNode.name);
+                if (methodNode.name.startsWith(methodName)) {
                     matchedMethods.add(methodNode);
                 }
             }

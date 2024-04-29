@@ -5,20 +5,14 @@ package com.ut.killer.classinfo;
  * @author gongdewei 2020/4/29
  */
 public class ThreadNode extends TraceNode {
-
     private String threadName;
     private long threadId;
     private boolean daemon;
     private int priority;
     private String classloader;
-//    private LocalDateTime timestamp;
-
-    private String traceId;
-    private String rpcId;
 
     public ThreadNode() {
         super("thread");
-//        timestamp = LocalDateTime.now();
     }
 
     public ThreadNode(String threadName, long threadId, boolean daemon, int priority, String classloader) {
@@ -28,7 +22,6 @@ public class ThreadNode extends TraceNode {
         this.daemon = daemon;
         this.priority = priority;
         this.classloader = classloader;
-//        timestamp = LocalDateTime.now();
     }
 
     public String getThreadName() {
@@ -69,29 +62,5 @@ public class ThreadNode extends TraceNode {
 
     public void setClassloader(String classloader) {
         this.classloader = classloader;
-    }
-
-//    public LocalDateTime getTimestamp() {
-//        return timestamp;
-//    }
-//
-//    public void setTimestamp(LocalDateTime timestamp) {
-//        this.timestamp = timestamp;
-//    }
-//
-    public String getTraceId() {
-        return traceId;
-    }
-
-    public void setTraceId(String traceId) {
-        this.traceId = traceId;
-    }
-
-    public String getRpcId() {
-        return rpcId;
-    }
-
-    public void setRpcId(String rpcId) {
-        this.rpcId = rpcId;
     }
 }

@@ -7,12 +7,8 @@ import com.alibaba.bytekit.asm.interceptor.annotation.AtInvoke;
 import com.alibaba.bytekit.asm.interceptor.annotation.ExceptionHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ut.killer.classinfo.ArgumentInfo;
-import com.ut.killer.classinfo.ClassInfo;
-import com.ut.killer.classinfo.MethodInfo;
-import com.ut.killer.classinfo.ReturnInfo;
+import com.ut.killer.classinfo.*;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -36,19 +32,14 @@ public class SampleInterceptor {
         MethodInfo methodInfo = new MethodInfo();
         methodInfo.setLine(line);
         methodInfo.setName(methodName);
-        List<ArgumentInfo> argumentInfos = new ArrayList<>();
-        for (int i = 0; i < args.length; i++) {
-            ArgumentInfo argumentInfo = new ArgumentInfo();
-            argumentInfo.setValue(args[i]);
-            argumentInfo.setName(argNames[i]);
-            argumentInfo.setType(args[i].getClass().getName());
-            argumentInfos.add(argumentInfo);
-        }
+        List<ArgumentInfo> argumentInfos = ClassUtils.toArguments(args, argNames);
         methodInfo.setArguments(argumentInfos);
         methodInfo.setSignature(methodDesc);
         classInfo.addMethod(methodInfo);
         threadLocal.set(classInfo);
     }
+
+
 
     @AtExit(inline = true)
     public static void atExit(@Binding.MethodDesc String methodDesc,

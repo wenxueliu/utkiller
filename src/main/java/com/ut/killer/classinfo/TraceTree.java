@@ -1,6 +1,8 @@
 package com.ut.killer.classinfo;
 
 import com.ut.killer.command.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -10,6 +12,8 @@ import java.util.List;
  * @author gongdewei 2020/4/28
  */
 public class TraceTree {
+    private static final Logger logger = LoggerFactory.getLogger(TraceTree.class);
+
     private TraceNode root;
 
     private TraceNode current;
@@ -21,22 +25,47 @@ public class TraceTree {
     }
 
     /**
-     * Begin a new method call
+     * 开始一个新的跟踪节点。
+     * 当进入一个新的方法或行时调用此方法，用于记录代码执行的路径。
      *
-     * @param className  className of method
-     * @param methodName method name of the call
-     * @param lineNumber line number of invoke point
-     * @param isInvoking Whether to invoke this method in other classes
+     * @param advice 包含当前执行方法信息的Advice对象，用于获取类名和方法名。
+     * @param lineNumber 当前执行的代码行号。
+     * @param isInvoking 表示当前方法是否是被调用的状态。
      */
-    public void begin(String className, String methodName, int lineNumber, boolean isInvoking) {
+    public void begin(Advice advice, int lineNumber, boolean isInvoking) {
+        String className = advice.getClazz().getName();
+        String methodName = advice.getMethod().getName();
+        logger.info("begin className {}", className);
+
         TraceNode child = findChild(current, className, methodName, lineNumber);
         if (child == null) {
-            child = new MethodNode(className, methodName, lineNumber, isInvoking);
+            child = new MethodNode(className, methodName, advice.getParams(), lineNumber, isInvoking);
             current.addChild(child);
         }
+        if (current == root && !className.equals("test.BaseTask")) {
+            return;
+        }
+        if (!isSameClassWithRoot(className)) {
+            MethodNode methodNode = (MethodNode) child;
+            methodNode.setMock(true);
+        }
         child.begin();
+        child.parent = current;
         current = child;
         nodeCount += 1;
+    }
+
+    private boolean isSameClassWithRoot(String className) {
+        for (TraceNode child : root.getChildren()) {
+            if (child.getType().equals("method")) {
+                MethodNode methodNode = (MethodNode) child;
+                logger.info("{} isSameClassWithRoot {}", methodNode.getClassName(), className);
+                if (methodNode.getClassName().equals(className)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private TraceNode findChild(TraceNode node, String className, String methodName, int lineNumber) {
@@ -67,7 +96,6 @@ public class TraceTree {
     public void end() {
         current.end();
         if (current.parent() != null) {
-            //TODO 为什么会到达这里？ 调用end次数比begin多？
             current = current.parent();
         }
     }
@@ -83,7 +111,6 @@ public class TraceTree {
 
     public void end(boolean isThrow) {
         if (isThrow) {
-            current.setMark("throws Exception");
             if (current instanceof MethodNode) {
                 MethodNode methodNode = (MethodNode) current;
                 methodNode.setThrow(true);

@@ -1,5 +1,9 @@
 package com.ut.killer.command;
 
+import com.ut.killer.classinfo.ArgumentInfo;
+
+import java.util.List;
+
 /**
  * 通知监听器<br/>
  * Created by vlinux on 15/5/17.
@@ -33,7 +37,7 @@ public interface AdviceListener {
      */
     void before(
             Class<?> clazz, String methodName, String methodDesc,
-            Object target, Object[] args) throws Throwable;
+            Object target, Object[] args,  String[] argNames) throws Throwable;
 
     /**
      * 返回通知
@@ -50,7 +54,7 @@ public interface AdviceListener {
      */
     void afterReturning(
             Class<?> clazz, String methodName, String methodDesc,
-            Object target, Object[] args,
+            Object target, List<ArgumentInfo> args,
             Object returnObject) throws Throwable;
 
     /**
@@ -67,7 +71,7 @@ public interface AdviceListener {
      */
     void afterThrowing(
             Class<?> clazz, String methodName, String methodDesc,
-            Object target, Object[] args,
+            Object target, List<ArgumentInfo> args,
             Throwable throwable) throws Throwable;
 
 }

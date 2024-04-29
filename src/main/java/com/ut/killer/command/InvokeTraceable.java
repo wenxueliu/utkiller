@@ -17,10 +17,11 @@ public interface InvokeTraceable {
      * @throws Throwable 通知过程出错
      */
     void invokeBeforeTracing(
-            ClassLoader classLoader,
+            Class<?> clazz,
             String tracingClassName,
             String tracingMethodName,
             String tracingMethodDesc,
+            Object[] args, String[] argNames,
             int tracingLineNumber) throws Throwable;
 
     /**
@@ -33,10 +34,11 @@ public interface InvokeTraceable {
      * @throws Throwable 通知过程出错
      */
     void invokeThrowTracing(
-            ClassLoader classLoader,
+            Class<?> clazz,
             String tracingClassName,
             String tracingMethodName,
             String tracingMethodDesc,
+            Object[] args, String[] argNames,
             int tracingLineNumber) throws Throwable;
 
 
@@ -50,10 +52,11 @@ public interface InvokeTraceable {
      * @throws Throwable 通知过程出错
      */
     void invokeAfterTracing(
-            ClassLoader classLoader,
+            Class<?> clazz,
             String tracingClassName,
             String tracingMethodName,
             String tracingMethodDesc,
+            Object[] args, String[] argNames,
             int tracingLineNumber) throws Throwable;
 
 

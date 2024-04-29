@@ -68,11 +68,7 @@ public class AdviceListenerManager {
                 className = className.replace('/', '.');
                 String key = key(className, methodName, methodDesc);
 
-                List<AdviceListener> listeners = map.get(key);
-                if (listeners == null) {
-                    listeners = new ArrayList<AdviceListener>();
-                    map.put(key, listeners);
-                }
+                List<AdviceListener> listeners = map.computeIfAbsent(key, k -> new ArrayList<>());
                 if (!listeners.contains(listener)) {
                     listeners.add(listener);
                 }
@@ -82,9 +78,7 @@ public class AdviceListenerManager {
         public List<AdviceListener> queryAdviceListeners(String className, String methodName, String methodDesc) {
             className = className.replace('/', '.');
             String key = key(className, methodName, methodDesc);
-
             List<AdviceListener> listeners = map.get(key);
-
             return listeners;
         }
 
@@ -94,11 +88,7 @@ public class AdviceListenerManager {
             className = className.replace('/', '.');
             String key = keyForTrace(className, owner, methodName, methodDesc);
 
-            List<AdviceListener> listeners = map.get(key);
-            if (listeners == null) {
-                listeners = new ArrayList<AdviceListener>();
-                map.put(key, listeners);
-            }
+            List<AdviceListener> listeners = map.computeIfAbsent(key, k -> new ArrayList<>());
             if (!listeners.contains(listener)) {
                 listeners.add(listener);
             }
@@ -138,11 +128,9 @@ public class AdviceListenerManager {
         classLoader = wrap(classLoader);
         className = className.replace('/', '.');
         ClassLoaderAdviceListenerManager manager = adviceListenerMap.get(classLoader);
-
         if (manager != null) {
             return manager.queryAdviceListeners(className, methodName, methodDesc);
         }
-
         return null;
     }
 
