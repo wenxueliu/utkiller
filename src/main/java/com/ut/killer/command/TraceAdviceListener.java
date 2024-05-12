@@ -35,7 +35,7 @@ public class TraceAdviceListener extends AbstractTraceAdviceListener implements 
         ArthasMethod arthasMethod = new ArthasMethod(clazz, tracingMethodDesc, tracingMethodDesc);
 
         Advice advice = Advice.newForBefore(classLoader, clazz, arthasMethod, null, null);
-        threadLocalTraceEntity(classLoader).tree.begin(advice, tracingLineNumber, true);
+//        threadLocalTraceEntity(classLoader).tree.begin(advice, tracingLineNumber, true);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class TraceAdviceListener extends AbstractTraceAdviceListener implements 
                                    Object[] args, String[] argNames, int tracingLineNumber)
             throws Throwable {
         ClassLoader classLoader = clazz.getClassLoader();
-        threadLocalTraceEntity(classLoader).tree.end();
+//        threadLocalTraceEntity(classLoader).tree.end();
     }
 
     @Override
@@ -53,6 +53,6 @@ public class TraceAdviceListener extends AbstractTraceAdviceListener implements 
                                    Object[] args, String[] argNames, int tracingLineNumber)
             throws Throwable {
         ClassLoader classLoader = clazz.getClassLoader();
-        threadLocalTraceEntity(classLoader).tree.end(true);
+//        threadLocalTraceEntity(classLoader).tree.end(true);
     }
 }

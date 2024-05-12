@@ -21,10 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.*;
 
 public class ByteTransformer implements ClassFileTransformer {
     private static final Logger logger = LoggerFactory.getLogger(ByteTransformer.class);
@@ -36,29 +33,36 @@ public class ByteTransformer implements ClassFileTransformer {
         SpyAPI.setSpy(spyImpl);
     }
 
-    private String methodName;
+    private Map<String, List<String>> methodNames;
 
-    private String targetClassName;
+    private Set<String> targetClassNames;
+
+    private static Set<String> enhanceClasses = new HashSet<>();
 
     private final AdviceListener listener = new TraceAdviceListener(true);;
 
 
-    public ByteTransformer(String targetClassName, String methodName) {
-        this.targetClassName = targetClassName;
-        this.methodName = methodName;
+    public ByteTransformer(Set<String> targetClassNames, Map<String, List<String>> methodNames) {
+        this.targetClassNames = targetClassNames;
+        this.methodNames = methodNames;
     }
 
     @Override
     public byte[] transform(ClassLoader inClassLoader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
         if (className == null) {
-            System.out.println("classname is null");
+            logger.info("classname is null {} {}", inClassLoader.getClass().getName(), classBeingRedefined.getName());
             return classfileBuffer;
         }
         String classNameByDot = className.replace('/', '.');
-        if (!classNameByDot.startsWith(targetClassName)) {
+        if (!targetClassNames.contains(classNameByDot)) {
             return classfileBuffer;
         }
-        logger.info("enhance {}", classNameByDot);
+        logger.info("classNameByDot: {}", classNameByDot);
+        if (enhanceClasses.contains(classNameByDot)) {
+            return classfileBuffer;
+        }
+        enhanceClasses.add(classNameByDot);
+        logger.info("enhance {} {}", inClassLoader, classNameByDot);
         try {
             // 检查classloader能否加载到 SpyAPI，如果不能，则放弃增强
             try {
@@ -93,7 +97,8 @@ public class ByteTransformer implements ClassFileTransformer {
             List<MethodNode> matchedMethods = new ArrayList<>();
             for (MethodNode methodNode : classNode.methods) {
                 logger.info("methodName: {}", methodNode.name);
-                if (methodNode.name.startsWith(methodName)) {
+                if (methodNames.get(classNameByDot).contains(methodNode.name)) {
+                    logger.info("hit {} {}", classNameByDot, methodNode.name);
                     matchedMethods.add(methodNode);
                 }
             }
@@ -107,6 +112,7 @@ public class ByteTransformer implements ClassFileTransformer {
                 }
             }
 
+            logger.info("matchedMethods size {} ", matchedMethods.size());
             for (MethodNode methodNode : matchedMethods) {
                 if (AsmUtils.isNative(methodNode)) {
                     logger.info("ignore native method: {}",
@@ -115,8 +121,10 @@ public class ByteTransformer implements ClassFileTransformer {
                 }
                 // 先查找是否有 atBeforeInvoke 函数，如果有，则说明已经有trace了，则直接不再尝试增强，直接插入 listener
                 if (AsmUtils.containsMethodInsnNode(methodNode, Type.getInternalName(SpyAPI.class), "atBeforeInvoke")) {
+                    logger.info("hasMethod atBeforeInvoke {} {}", classNode.name, methodNode.name);
                     for (AbstractInsnNode insnNode = methodNode.instructions.getFirst(); insnNode != null; insnNode = insnNode
                             .getNext()) {
+                        logger.info("iterator {} {} {}", classNode.name, methodNode.name, insnNode.getType());
                         if (insnNode instanceof MethodInsnNode) {
                             final MethodInsnNode methodInsnNode = (MethodInsnNode) insnNode;
                             if (methodInsnNode.owner.startsWith("java/")) {
@@ -131,10 +139,17 @@ public class ByteTransformer implements ClassFileTransformer {
                         }
                     }
                 } else {
+                    logger.info("methodProcessor {} {}", classNode.name, methodNode.name);
+                    if (methodNode.instructions.size() == 0) {
+                        logger.info("{} {} is interface", classNode.name, methodNode.name);
+                        // TODO 找到接口的实现类及实现方法
+                        continue;
+                    }
                     MethodProcessor methodProcessor = new MethodProcessor(classNode, methodNode);
                     for (InterceptorProcessor interceptor : interceptorProcessors) {
                         try {
                             List<Location> locations = interceptor.process(methodProcessor);
+                            logger.info("locations {}", locations);
                             for (Location location : locations) {
                                 if (location instanceof MethodInsnNodeWare) {
                                     MethodInsnNodeWare methodInsnNodeWare = (MethodInsnNodeWare) location;
@@ -151,6 +166,7 @@ public class ByteTransformer implements ClassFileTransformer {
                     }
                 }
 
+                logger.info("methodNode {} {}", methodNode.name, methodNode.desc);
                 // enter/exist 总是要插入 listener
                 AdviceListenerManager.registerAdviceListener(inClassLoader, className, methodNode.name, methodNode.desc,
                         listener);

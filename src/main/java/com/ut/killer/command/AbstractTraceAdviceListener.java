@@ -53,7 +53,7 @@ public class AbstractTraceAdviceListener extends AdviceListenerAdapter {
     public void afterReturning(ClassLoader loader, Class<?> clazz, ArthasMethod method, Object target, List<ArgumentInfo> args,
                                Object returnObject) throws Throwable {
         final Advice advice = Advice.newForAfterReturning(loader, clazz, method, target, args, returnObject);
-        threadLocalTraceEntity(loader).tree.end();
+        threadLocalTraceEntity(loader).tree.end(advice, -1);
         finishing(loader, advice);
     }
 
@@ -65,9 +65,9 @@ public class AbstractTraceAdviceListener extends AdviceListenerAdapter {
         if (stackTrace.length != 0) {
             lineNumber = stackTrace[0].getLineNumber();
         }
-
-        threadLocalTraceEntity(loader).tree.end(throwable, lineNumber);
         final Advice advice = Advice.newForAfterThrowing(loader, clazz, method, target, args, throwable);
+
+        threadLocalTraceEntity(loader).tree.end(advice, throwable, lineNumber);
         finishing(loader, advice);
     }
 

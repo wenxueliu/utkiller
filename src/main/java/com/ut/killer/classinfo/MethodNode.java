@@ -13,6 +13,9 @@ public class MethodNode extends TraceNode {
     private int lineNumber;
 
     private List<ArgumentInfo> args;
+
+    private ReturnInfo returnInfo;
+
     private Boolean isThrow;
     private String throwExp;
 
@@ -101,5 +104,13 @@ public class MethodNode extends TraceNode {
 
     public boolean isMock() {
         return isMock;
+    }
+
+    public void setReturnInfo(ReturnInfo returnInfo) {
+        this.returnInfo = returnInfo;
+    }
+
+    public ReturnInfo getReturnInfo() {
+        return returnInfo;
     }
 }

@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Tree model of TraceCommand
@@ -42,10 +43,8 @@ public class TraceTree {
             child = new MethodNode(className, methodName, advice.getParams(), lineNumber, isInvoking);
             current.addChild(child);
         }
-        if (current == root && !className.equals("test.BaseTask")) {
-            return;
-        }
         if (!isSameClassWithRoot(className)) {
+            logger.info("{} is not equal root className", className);
             MethodNode methodNode = (MethodNode) child;
             methodNode.setMock(true);
         }
@@ -85,7 +84,7 @@ public class TraceTree {
     private boolean matchNode(TraceNode node, String className, String methodName, int lineNumber) {
         if (node instanceof MethodNode) {
             MethodNode methodNode = (MethodNode) node;
-            if (lineNumber != methodNode.getLineNumber()) return false;
+//            if (lineNumber != methodNode.getLineNumber()) return false;
             if (className != null ? !className.equals(methodNode.getClassName()) : methodNode.getClassName() != null)
                 return false;
             return methodName != null ? methodName.equals(methodNode.getMethodName()) : methodNode.getMethodName() == null;
@@ -93,30 +92,55 @@ public class TraceTree {
         return false;
     }
 
-    public void end() {
+    public ReturnInfo getReturnInfo(Object object) {
+        if (Objects.isNull(object)) {
+            ReturnInfo returnInfo = new ReturnInfo();
+            returnInfo.setValue(null);
+            returnInfo.setType("Void");
+            return returnInfo;
+        }
+        ReturnInfo returnInfo = new ReturnInfo();
+        returnInfo.setType(object.getClass().getTypeName());
+        returnInfo.setValue(object);
+        return returnInfo;
+    }
+
+    public void end(Advice advice, int lineNumber) {
+        String className = advice.getClazz().getName();
+        String methodName = advice.getMethod().getName();
+        logger.info("begin {} {} {}", className, methodName, advice.getReturnObj());
+
+        TraceNode child = findChild(current, className, methodName, lineNumber);
+        if (child == null) {
+            logger.info("child is null");
+            return;
+        }
+        MethodNode methodNode = (MethodNode) child;
+        methodNode.setReturnInfo(getReturnInfo(advice.getReturnObj()));
+
         current.end();
         if (current.parent() != null) {
             current = current.parent();
         }
     }
 
-    public void end(Throwable throwable, int lineNumber) {
+    public void end(Advice advice, Throwable throwable, int lineNumber) {
         ThrowNode throwNode = new ThrowNode();
         throwNode.setException(throwable.getClass().getName());
         throwNode.setMessage(throwable.getMessage());
         throwNode.setLineNumber(lineNumber);
         current.addChild(throwNode);
-        this.end(true);
+        this.end(advice, true);
     }
 
-    public void end(boolean isThrow) {
+    public void end(Advice advice, boolean isThrow) {
         if (isThrow) {
             if (current instanceof MethodNode) {
                 MethodNode methodNode = (MethodNode) current;
                 methodNode.setThrow(true);
             }
         }
-        this.end();
+        this.end(advice, -1);
     }
 
     /**
