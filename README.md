@@ -23,10 +23,16 @@ UT-Killer是一个基于字节码工具，通过自动拦截Java方法，记录�
 
 ### 示例
 
-URL: 127.0.0.1:8888/rest/v1/exec
+URL: http://127.0.0.1:8888/rest/v1/exec
 
 method: POST 
 
+header:
+```
+"Content-Type": "application/json"
+```
+
+body:
 ```json
 {
   "className": "com.imagedance.zpai.utils.JsonUtils",
@@ -39,6 +45,37 @@ method: POST
     "Lcom/imagedance/zpai/model/UserInfo"
   ]
 }
+```
+
+URL: http://127.0.0.1:8888/rest/v2/exec
+
+method: POST
+
+header:
+```
+"Content-Type": "application/json"
+```
+
+body:
+```json
+{
+  "execRequest" :{
+    "className": "com.imagedance.zpai.controller.ImageController",
+    "methodName":"deleteCollectImage",
+    "methodSignature": "(Lcom/imagedance/zpai/model/vo/ImageCollectDeleteVo;)Lcom/imagedance/zpai/model/ResultVo;",
+    "parameterJsonString": [
+      "{\"imageId\": \"123\",\"userId\": \"John Doe\"}"
+    ],
+    "parameterTypeSignature": [
+      "Lcom/imagedance/zpai/model/vo/ImageCollectDeleteVo"
+    ]
+  },
+  "mockRequests": [{
+    "className": "com.imagedance.zpai.service.ImageService",
+    "methodName":"deleteCollectImage",
+  }]
+}
+
 ```
 
 ## 感谢

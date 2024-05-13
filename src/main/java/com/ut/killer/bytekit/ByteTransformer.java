@@ -96,7 +96,7 @@ public class ByteTransformer implements ClassFileTransformer {
 
             List<MethodNode> matchedMethods = new ArrayList<>();
             for (MethodNode methodNode : classNode.methods) {
-                logger.info("methodName: {}", methodNode.name);
+                logger.info("methodName: {} {}", methodNode.name, methodNode.signature);
                 if (methodNames.get(classNameByDot).contains(methodNode.name)) {
                     logger.info("hit {} {}", classNameByDot, methodNode.name);
                     matchedMethods.add(methodNode);

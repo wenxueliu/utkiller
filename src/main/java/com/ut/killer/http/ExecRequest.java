@@ -52,4 +52,7 @@ public class ExecRequest {
     public void setParameterTypeSignature(List<String> parameterTypeSignature) {
         this.parameterTypeSignature = parameterTypeSignature;
     }
+    public MethodRequest toMethodRequest() {
+        return new MethodRequest(className, methodName, methodSignature);
+    }
 }

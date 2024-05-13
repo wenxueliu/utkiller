@@ -24,10 +24,6 @@ public class ExecutorHandler extends JsonResponseHandler {
 
     public Object handle(ExecRequest execRequest) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
         MethoExecutor executor = new MethoExecutor();
-//        String body = "{\"userId\": \"123\",\"userName\": \"John Doe\"}";
-//        return executor.execute("com.imagedance.zpai.utils.JsonUtils", "toUserInfo",
-//                "(Lcom/imagedance/zpai/model/UserInfo;)Ljava/lang/String;",
-//                Arrays.asList(body), Arrays.asList("Lcom/imagedance/zpai/model/UserInfo"));
         return executor.execute(execRequest.getClassName(), execRequest.getMethodName(),
                 execRequest.getMethodSignature(), execRequest.getParameterJsonString(),
                 execRequest.getParameterTypeSignature());

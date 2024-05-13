@@ -2,6 +2,7 @@ package com.ut.killer.http;
 
 import com.ut.killer.http.hander.ExecutorHandler;
 import com.ut.killer.http.hander.HttpHandler;
+import com.ut.killer.http.hander.InstrumentAndExecutorHandler;
 import com.ut.killer.http.hander.InstrumentHandler;
 import fi.iki.elonen.NanoHTTPD;
 
@@ -17,6 +18,7 @@ public class HttpAgentServer extends NanoHTTPD {
         super(port);
         addHandler("/rest/v1/tree", new InstrumentHandler());
         addHandler("/rest/v1/exec", new ExecutorHandler());
+        addHandler("/rest/v2/exec", new InstrumentAndExecutorHandler());
     }
 
     void addHandler(String url, HttpHandler handler) {
