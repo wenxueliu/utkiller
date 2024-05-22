@@ -126,7 +126,7 @@ public class ClazzUtils {
             if (type.equals("file")) {
                 String fileSearchPath = url.getPath();
                 logger.debug("fileSearchPath: {}", fileSearchPath);
-                fileSearchPath = fileSearchPath.substring(0, fileSearchPath.indexOf(File.separator + "classes"));
+                fileSearchPath = fileSearchPath.substring(0, fileSearchPath.indexOf("/classes"));
                 logger.debug("fileSearchPath: " + fileSearchPath);
                 fileNames = getClassNameByFile(fileSearchPath);
             } else if (type.equals("jar")) {
