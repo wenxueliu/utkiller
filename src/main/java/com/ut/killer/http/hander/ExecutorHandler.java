@@ -1,6 +1,6 @@
 package com.ut.killer.http.hander;
 
-import com.ut.killer.execute.MethoExecutor;
+import com.ut.killer.execute.MethodExecutor;
 import com.ut.killer.http.ExecRequest;
 import com.ut.killer.http.ResultData;
 import fi.iki.elonen.NanoHTTPD;
@@ -23,7 +23,7 @@ public class ExecutorHandler extends JsonResponseHandler {
     }
 
     public Object handle(ExecRequest execRequest) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
-        MethoExecutor executor = new MethoExecutor();
+        MethodExecutor executor = new MethodExecutor();
         return executor.execute(execRequest.getClassName(), execRequest.getMethodName(),
                 execRequest.getMethodSignature(), execRequest.getParameterJsonString(),
                 execRequest.getParameterTypeSignature());
