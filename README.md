@@ -18,7 +18,7 @@ UT-Killer是一个基于字节码工具，通过自动拦截Java方法，记录�
 ### main 方法增加初始化代码
 
 ```java
-    HttpAgentServer.init();
+    HttpAgentServer.init(8888);
 ```
 
 ### 示例
