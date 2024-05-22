@@ -222,6 +222,11 @@
             <artifactId>commons-lang3</artifactId>
             <version>3.14.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.taobao.arthas</groupId>
+            <artifactId>arthas-vmtool</artifactId>
+            <version>3.7.2</version>
+        </dependency>
     </dependencies>
 
 
