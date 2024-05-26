@@ -2,8 +2,10 @@ package com.ut.killer.http.hander;
 
 import com.ut.killer.HotSwapAgentMain;
 import com.ut.killer.bytekit.ByteTransformer;
+import com.ut.killer.classinfo.ClassUtils;
 import com.ut.killer.execute.MethodExecutor;
 import com.ut.killer.http.*;
+import com.ut.killer.parser.ClazzUtils;
 import com.ut.killer.parser.JavaParser;
 import fi.iki.elonen.NanoHTTPD;
 import javassist.ClassClassPath;
@@ -39,24 +41,12 @@ public class InstrumentAndExecutorHandler extends JsonResponseHandler {
     }
 
     public void handleInstrument(InstrumentRequest instrumentRequest) throws Exception {
-//        List<String> inputClassNames = Arrays.asList("com.imagedance.zpai.controller.ImageController",
-//                "com.imagedance.zpai.service.ImageService",
-//                "javax.servlet.http.HttpServletRequest");
-//        Map<String, List<String>> methodNames = new HashMap<>();
-//        methodNames.put("com.imagedance.zpai.controller.ImageController", Arrays.asList("deleteCollectImage"));
-//        methodNames.put("com.imagedance.zpai.service.ImageService", Arrays.asList("deleteCollectImage"));
-//        methodNames.put("com.imagedance.zpai.service.impl.ImageServiceImpl", Arrays.asList("deleteCollectImage"));
-//        methodNames.put("javax.servlet.http.HttpServletRequest", Arrays.asList("getHeaderNames"));
-//        methodNames.put("org.apache.catalina.connector.RequestFacade", Arrays.asList("getHeaderNames"));
-//        methodNames.put("com.imagedance.zpai.service.ImageMetaService", Arrays.asList("deleteCollectImage"));
-//        methodNames.put("com.imagedance.zpai.service.impl.ImageMetaServiceImpl", Arrays.asList("deleteCollectImage"));
-
         Set<String> inputClassNames = instrumentRequest.toClassNames();
         Set<String> targetClassNames =
-                inputClassNames.stream().map(JavaParser::getImplementClassNames).flatMap(Set::stream).collect(Collectors.toSet());
+                inputClassNames.stream().map(ClazzUtils::getImplementClassNames).flatMap(Set::stream).collect(Collectors.toSet());
         logger.info("agentmain target classes {}", targetClassNames);
         Set<Class<?>> targetClasses =
-                inputClassNames.stream().map(JavaParser::getImplementClasses).flatMap(Set::stream).collect(Collectors.toSet());
+                inputClassNames.stream().map(ClazzUtils::getImplementClasses).flatMap(Set::stream).collect(Collectors.toSet());
 
         Map<String, List<String>> methodNames = instrumentRequest.toClass2Methods();
         ClassPool.getDefault().insertClassPath(new ClassClassPath(HotSwapper.class));

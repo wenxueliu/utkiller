@@ -100,7 +100,8 @@ public class InstanceUtils {
                     SearchUtils.searchClassOnly(inst, className, false, hashCode));
             int matchedClassSize = matchedClasses.size();
             if (matchedClassSize == 0) {
-                throw new IllegalArgumentException("Can not find class by class name: " + className + ".");
+//                throw new IllegalArgumentException("Can not find class by class name: " + className + ".");
+                return null;
             } else if (matchedClassSize > 1) {
                 throw new IllegalArgumentException("Found more than one class: " + matchedClasses + ", please specify classloader with '-c <classloader hash>'");
             } else {
@@ -121,6 +122,7 @@ public class InstanceUtils {
         if (vmTool != null) {
             return vmTool;
         } else {
+            libPath = "D:\\下载\\arthas-packaging-3.7.2-bin\\lib\\libArthasJniLibrary-x64.dll";
             if (libPath == null) {
                 libPath = defaultLibPath;
             }
@@ -158,7 +160,6 @@ public class InstanceUtils {
     public static Object springContextInstance(String className) {
         InstanceUtils instanceUtils = new InstanceUtils();
         instanceUtils.setClassLoaderClass("sun.misc.Launcher$AppClassLoader");
-//        vmToolCommand.setClassLoaderClass("org.springframework.boot.loader.LaunchedURLClassLoader");
         instanceUtils.setClassName(className);
         return instanceUtils.getInstance();
     }

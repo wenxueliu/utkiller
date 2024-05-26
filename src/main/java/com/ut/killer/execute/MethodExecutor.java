@@ -36,18 +36,6 @@ public class MethodExecutor {
 
     ParameterFactory parameterFactory = new ParameterFactory(objenesis, objectMapper, byteBuddyInstance);
 
-    private Object applicationContext;
-    private Object springTestContextManager;
-    private boolean isSpringPresent;
-    private Method getBeanMethod;
-    private Method getBeanByBeanNameMethod;
-    private Object springBeanFactory;
-    private Method getBeanDefinitionNamesMethod;
-
-    public MethodExecutor() {
-        this.loadContext(Thread.currentThread().getContextClassLoader());
-    }
-
     public void execute1(String className, String methodName, Object... args) {
         try {
             ClassPool pool = ClassPool.getDefault();
@@ -61,13 +49,16 @@ public class MethodExecutor {
     }
 
     public Object execute(String targetClassName, String methodName, String methodSignature,
-                         List<String> methodParameters, List<String> parameterTypes)
+                          List<String> methodParameters, List<String> parameterTypes)
             throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         ClassLoader targetClassLoader1 = Thread.currentThread().getContextClassLoader();
+
         Object objectInstanceByClass = tryObjectConstruct(targetClassName, targetClassLoader1, new HashMap<>());
 
         Class<?> targetClassType = getTargetClassType(targetClassName, targetClassLoader1, objectInstanceByClass);
+
         ClassLoader targetClassLoader = objectInstanceByClass.getClass().getClassLoader();
+
         List<String> methodSignatureParts = MethodSignatureParser.parseMethodSignature(
                 methodSignature);
         String methodReturnType = methodSignatureParts.remove(methodSignatureParts.size() - 1);
@@ -315,9 +306,12 @@ public class MethodExecutor {
         if (className.equals("java.util.Map")) {
             return new HashMap<>();
         }
-        Object newInstance = null;
         if (targetClassLoader == null) {
             System.err.println("Failed to construct instance of class [" + className + "]. classLoader is not defined");
+        }
+        Object newInstance = SpringUtils.getBean(className);
+        if (newInstance != null) {
+            return newInstance;
         }
         Class<?> loadedClass;
         try {
@@ -386,6 +380,7 @@ public class MethodExecutor {
                         try {
                             return method.invoke(null);
                         } catch (InvocationTargetException ex) {
+                            logger.error("method.invoke error", ex);
                             // this method for potentially getting instance from static getInstance type method
                             // did not work
                         }
@@ -439,160 +434,12 @@ public class MethodExecutor {
                 try {
                     field.set(newInstance, value);
                 } catch (Throwable th) {
-                    th.printStackTrace();
+                    logger.error("filed.set error", th);
                     System.out.println("Failed to set field value: " + th.getMessage());
                 }
             }
             fieldsForClass = fieldsForClass.getSuperclass();
         }
-
         return newInstance;
-
-    }
-
-    private void loadContext(ClassLoader classLoader) {
-        try {
-            if (this.applicationContext != null) {
-                // already loaded
-                return;
-            }
-//            if (this.springTestContextManager == null) {
-//                this.springTestContextManager = classLoader.loadClass("org.springframework.boot.web" +
-//                        ".reactive.context" +
-//                        ".AnnotationConfigReactiveWebServerApplicationContext");
-//                setSpringApplicationContextAndLoadBeanFactory(this.springTestContextManager);
-//            }
-
-            if (this.springTestContextManager == null) {
-//                this.springTestContextManager = classLoader.loadClass(
-//                        "org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext"
-//                );
-                this.springTestContextManager = InstanceUtils.springContextInstance("org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext");
-                setSpringApplicationContextAndLoadBeanFactory(this.springTestContextManager);
-            }
-
-            if (applicationContext != null) {
-                Class<?> applicationContextClass = Class.forName("org.springframework.context.ApplicationContext");
-                getBeanDefinitionNamesMethod = applicationContextClass.getMethod("getBeanNamesForType", Class.class,
-                        boolean.class, boolean.class);
-            }
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    private void trySpringIntegration(Class<?> testClass) {
-        // spring loader
-        // if spring exists
-        try {
-            Class.forName("org.springframework.boot.SpringApplication");
-            isSpringPresent = true;
-
-
-            Annotation[] classAnnotations = testClass.getAnnotations();
-            boolean hasEnableAutoConfigAnnotation = false;
-            for (Annotation classAnnotation : classAnnotations) {
-                if (classAnnotation.annotationType().getCanonicalName().startsWith("org.springframework.")) {
-                    hasEnableAutoConfigAnnotation = true;
-                    break;
-                }
-            }
-            Class<?> testContextManagerClass = null;
-            try {
-                testContextManagerClass = Class.forName("org.springframework.test.context.TestContextManager");
-            } catch (Exception e) {
-            }
-            // no spring context creation if no spring annotation is used on the test class
-            if (!hasEnableAutoConfigAnnotation) {
-                return;
-            }
-
-
-            this.springTestContextManager = testContextManagerClass.getConstructor(Class.class).newInstance(testClass);
-            Method getTestContextMethod = testContextManagerClass.getMethod("getTestContext");
-            Class<?> testContextClass = Class.forName("org.springframework.test.context.TestContext");
-
-            Method getApplicationContextMethod = testContextClass.getMethod("getApplicationContext");
-
-
-            Class<?> pspcClass = Class.forName(
-                    "org.springframework.context.support.PropertySourcesPlaceholderConfigurer");
-
-            Object propertySourcesPlaceholderConfigurer = pspcClass.getConstructor().newInstance();
-
-
-            Class<?> propertiesClass = Class.forName("java.util.Properties");
-            Method pspcClassSetPropertiesMethod = pspcClass.getMethod("setProperties", propertiesClass);
-
-//            PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer = new PropertySourcesPlaceholderConfigurer();
-            Class<?> yamlPropertiesFactoryBeanClass = Class.forName(
-                    "org.springframework.beans.factory.config.YamlPropertiesFactoryBean");
-            Object yaml = yamlPropertiesFactoryBeanClass.getConstructor().newInstance();
-            Method yamlGetObjectMethod = yamlPropertiesFactoryBeanClass.getMethod("getObject");
-            Class<?> classPathResourceClass = Class.forName("org.springframework.core.io.ClassPathResource");
-            Object classPathResource = classPathResourceClass.getConstructor(String.class)
-                    .newInstance("config/application.yml");
-//            ClassPathResource classPathResource = new ClassPathResource("config/application.yml");
-            Method setResourceMethod = yamlPropertiesFactoryBeanClass.getMethod("setResources",
-                    Class.forName("[Lorg.springframework.core.io.Resource;"));
-            Method resourceExistsMethod = classPathResourceClass.getMethod("exists");
-            if ((boolean) resourceExistsMethod.invoke(classPathResource)) {
-//                yaml.setResources(classPathResource);
-                setResourceMethod.invoke(yaml, classPathResource);
-//                propertySourcesPlaceholderConfigurer.setProperties(yaml.getObject());
-                Object yamlObject = yamlGetObjectMethod.invoke(yaml);
-                pspcClassSetPropertiesMethod.invoke(propertySourcesPlaceholderConfigurer, yamlObject);
-            }
-
-
-            Object testContext = getTestContextMethod.invoke(this.springTestContextManager);
-            Object applicationContext = getApplicationContextMethod.invoke(testContext);
-
-            Object factory = setSpringApplicationContextAndLoadBeanFactory(applicationContext);
-
-            Method pspcProcessBeanFactoryMethod = pspcClass.getMethod("postProcessBeanFactory",
-                    Class.forName("org.springframework.beans.factory.config.ConfigurableListableBeanFactory"));
-
-            pspcProcessBeanFactoryMethod.invoke(propertySourcesPlaceholderConfigurer, factory);
-
-//            propertySourcesPlaceholderConfigurer.postProcessBeanFactory(
-//                    (DefaultListableBeanFactory) this.springTestContextManager.getTestContext().getApplicationContext()
-//                            .getAutowireCapableBeanFactory());
-        } catch (Throwable e) {
-            // failed to start spring application context
-            e.printStackTrace();
-            return;
-        }
-    }
-
-    private Object setSpringApplicationContextAndLoadBeanFactory(Object applicationContext) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        try {
-            if (applicationContext == null) {
-                return null;
-            }
-            this.applicationContext = applicationContext;
-
-            Class<?> applicationContextClass = Class.forName("org.springframework.context.ApplicationContext");
-            getBeanMethod = applicationContextClass.getMethod("getBean", Class.class);
-            getBeanByBeanNameMethod = applicationContextClass.getMethod("getBean", String.class);
-            Method getAutowireCapableBeanFactoryMethod = applicationContextClass.getMethod(
-                    "getAutowireCapableBeanFactory");
-
-            springBeanFactory = Class.forName("org.springframework.beans.factory.support.DefaultListableBeanFactory")
-                    .cast(getAutowireCapableBeanFactoryMethod.invoke(applicationContext));
-            return springBeanFactory;
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-        return null;
-
-    }
-
-
-    public void enableSpringIntegration(Class<?> testClass) {
-        if (this.springTestContextManager == null) {
-            trySpringIntegration(testClass);
-        }
     }
 }

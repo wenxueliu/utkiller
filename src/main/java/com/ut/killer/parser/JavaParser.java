@@ -32,37 +32,6 @@ public class JavaParser {
 //        }
 //    }
 
-    public static Set<Class<?>> getImplementClasses(String className) {
-        logger.info("get implement for: {}", className);
-        Set<Class<?>> implClasses = new HashSet<>();
-        Class<?> classType = getClassForName(className);
-        if (Objects.isNull(classType)) {
-            return implClasses;
-        }
-        if (classType.isInterface()) {
-            implClasses.addAll(ClazzUtils.getAllClassByInterface(classType));
-        } else {
-            implClasses.add(classType);
-        }
-        // 获取类的实现类
-        implClasses.add(classType);
-        return implClasses;
-    }
-
-    private static Class<?> getClassForName(String className) {
-        Class<?> classType = null;
-        try {
-            classType = Class.forName(className);
-        } catch (ClassNotFoundException ex) {
-            logger.error("cannot find class {} ", className);
-        }
-        return classType;
-    }
-
-    public static Set<String> getImplementClassNames(String className) {
-        return getImplementClasses(className).stream().map(Class::getCanonicalName).collect(Collectors.toSet());
-    }
-
 //    public static Reflections getReflections(String className) {
 //        if (className.lastIndexOf(".") < 1) {
 //            throw new IllegalArgumentException("please give canonical class name");

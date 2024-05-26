@@ -4,6 +4,7 @@ import com.ut.killer.HotSwapAgentMain;
 import com.ut.killer.bytekit.ByteTransformer;
 import com.ut.killer.http.ResultData;
 import com.ut.killer.http.TreeRequest;
+import com.ut.killer.parser.ClazzUtils;
 import com.ut.killer.parser.JavaParser;
 import fi.iki.elonen.NanoHTTPD;
 import javassist.ClassClassPath;
@@ -48,10 +49,10 @@ public class InstrumentHandler extends JsonResponseHandler {
 //        }
 
         Set<String> targetClassNames =
-                inputClassNames.stream().map(JavaParser::getImplementClassNames).flatMap(Set::stream).collect(Collectors.toSet());
+                inputClassNames.stream().map(ClazzUtils::getImplementClassNames).flatMap(Set::stream).collect(Collectors.toSet());
         logger.info("agentmain target classes {}", targetClassNames);
         Set<Class<?>> targetClasses =
-                inputClassNames.stream().map(JavaParser::getImplementClasses).flatMap(Set::stream).collect(Collectors.toSet());
+                inputClassNames.stream().map(ClazzUtils::getImplementClasses).flatMap(Set::stream).collect(Collectors.toSet());
 
         ClassPool.getDefault().insertClassPath(new ClassClassPath(HotSwapper.class));
         Instrumentation instrumentation = HotSwapAgentMain.startAgentAndGetInstrumentation();

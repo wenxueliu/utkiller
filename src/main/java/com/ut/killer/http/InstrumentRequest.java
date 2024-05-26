@@ -1,5 +1,8 @@
 package com.ut.killer.http;
 
+import com.ut.killer.classinfo.ClassUtils;
+import com.ut.killer.parser.ClazzUtils;
+
 import java.util.*;
 
 public class InstrumentRequest {
@@ -40,16 +43,26 @@ public class InstrumentRequest {
 
     public Map<String, List<String>> toClass2Methods() {
         Map<String, List<String>> class2Methods = new HashMap<>();
-        if (class2Methods.containsKey(methodRequest.getClassName())) {
-            class2Methods.get(methodRequest.getClassName()).add(methodRequest.getMethodName());
-        } else {
-            class2Methods.put(methodRequest.getClassName(), new ArrayList<>(Collections.singletonList(methodRequest.getMethodName())));
-        }
-        for (MethodRequest mockMethod : mockMethods) {
-            if (class2Methods.containsKey(mockMethod.getClassName())) {
-                class2Methods.get(mockMethod.getClassName()).add(mockMethod.getMethodName());
+        String classNameByDot = methodRequest.getClassName();
+        Set<String> implementClassNames = ClazzUtils.getImplementClassNames(classNameByDot);
+        for (String implementClassName : implementClassNames) {
+            String methodName = methodRequest.getMethodName();
+            if (class2Methods.containsKey(implementClassName)) {
+                class2Methods.get(implementClassName).add(methodName);
             } else {
-                class2Methods.put(mockMethod.getClassName(), new ArrayList<>(Collections.singletonList(mockMethod.getMethodName())));
+                class2Methods.put(implementClassName, new ArrayList<>(Collections.singletonList(methodName)));
+            }
+        }
+
+        for (MethodRequest mockMethod : mockMethods) {
+            String methodName = mockMethod.getMethodName();
+            Set<String> implementMockClassNames = ClazzUtils.getImplementClassNames(mockMethod.getClassName());
+            for (String implementMockClassName : implementMockClassNames) {
+                if (class2Methods.containsKey(implementMockClassName)) {
+                    class2Methods.get(implementMockClassName).add(methodName);
+                } else {
+                    class2Methods.put(implementMockClassName, new ArrayList<>(Collections.singletonList(methodName)));
+                }
             }
         }
         return class2Methods;

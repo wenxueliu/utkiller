@@ -1,5 +1,6 @@
 package com.ut.killer.parser;
 
+import com.ut.killer.execute.SpringUtils;
 import com.ut.killer.http.hander.HttpHandler;
 import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
@@ -9,11 +10,10 @@ import java.io.File;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
 
 public class ClazzUtils {
@@ -28,6 +28,42 @@ public class ClazzUtils {
         for (Class<?> implementingClass : implementingClasses) {
             System.out.println(implementingClass.getName());
         }
+    }
+
+    public static Set<Class<?>> getImplementClasses(String className) {
+        logger.info("get implement for: {}", className);
+        Set<Class<?>> implClasses = new HashSet<>();
+        Class<?> classType = getClassForName(className);
+        if (Objects.isNull(classType)) {
+            return implClasses;
+        }
+        if (classType.isInterface()) {
+            Object beanClass = SpringUtils.getBean(className);
+            if (beanClass != null) {
+                implClasses.add(beanClass.getClass());
+            } else {
+                implClasses.addAll(ClazzUtils.getAllClassByInterface(classType));
+            }
+        } else {
+            implClasses.add(classType);
+        }
+        // 获取类的实现类
+//        implClasses.add(classType);
+        return implClasses;
+    }
+
+    public static Set<String> getImplementClassNames(String className) {
+        return getImplementClasses(className).stream().map(Class::getCanonicalName).collect(Collectors.toSet());
+    }
+
+    private static Class<?> getClassForName(String className) {
+        Class<?> classType = null;
+        try {
+            classType = Class.forName(className);
+        } catch (ClassNotFoundException ex) {
+            logger.error("cannot find class {} ", className);
+        }
+        return classType;
     }
 
     private static URL getURL(String packageName) {

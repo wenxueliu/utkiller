@@ -2,6 +2,7 @@ package com.ut.killer;
 
 
 import com.ut.killer.bytekit.ByteTransformer;
+import com.ut.killer.parser.ClazzUtils;
 import com.ut.killer.parser.JavaParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,10 +35,10 @@ public class AgentMain {
 //        }
 
         Set<String> targetClassNames =
-                inputClassNames.stream().map(JavaParser::getImplementClassNames).flatMap(Set::stream).collect(Collectors.toSet());
+                inputClassNames.stream().map(ClazzUtils::getImplementClassNames).flatMap(Set::stream).collect(Collectors.toSet());
         logger.info("agentmain target classes {}", targetClassNames);
         Set<Class<?>> targetClasses =
-                inputClassNames.stream().map(JavaParser::getImplementClasses).flatMap(Set::stream).collect(Collectors.toSet());
+                inputClassNames.stream().map(ClazzUtils::getImplementClasses).flatMap(Set::stream).collect(Collectors.toSet());
         instrumentation.addTransformer(new ByteTransformer(targetClassNames, methodNames), true);
         instrumentation.retransformClasses(targetClasses.toArray(new Class[0]));
     }
@@ -64,9 +65,9 @@ public class AgentMain {
 //            targetClasses[i] = Class.forName(targetClassNames.get(i));
 //        }
 
-        Set<String> targetClassNames = JavaParser.getImplementClassNames(agentOps);
+        Set<String> targetClassNames = ClazzUtils.getImplementClassNames(agentOps);
         logger.info("agentmain target classes {}", targetClassNames);
         instrumentation.addTransformer(new ByteTransformer(targetClassNames, methodNames), true);
-        instrumentation.retransformClasses(JavaParser.getImplementClasses(agentOps).toArray(new Class[0]));
+        instrumentation.retransformClasses(ClazzUtils.getImplementClasses(agentOps).toArray(new Class[0]));
     }
 }
