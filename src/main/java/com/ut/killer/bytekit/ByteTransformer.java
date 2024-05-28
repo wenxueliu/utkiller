@@ -33,7 +33,7 @@ public class ByteTransformer implements ClassFileTransformer {
         SpyAPI.setSpy(spyImpl);
     }
 
-    private Map<String, List<String>> methodNames;
+    private Map<String, Set<String>> methodNames;
 
     private Set<String> targetClassNames;
 
@@ -42,7 +42,7 @@ public class ByteTransformer implements ClassFileTransformer {
     private final AdviceListener listener = new TraceAdviceListener(true);;
 
 
-    public ByteTransformer(Set<String> targetClassNames, Map<String, List<String>> methodNames) {
+    public ByteTransformer(Set<String> targetClassNames, Map<String, Set<String>> methodNames) {
         this.targetClassNames = targetClassNames;
         this.methodNames = methodNames;
     }

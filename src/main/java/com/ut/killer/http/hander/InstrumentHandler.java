@@ -1,5 +1,6 @@
 package com.ut.killer.http.hander;
 
+import com.google.common.collect.Sets;
 import com.ut.killer.HotSwapAgentMain;
 import com.ut.killer.bytekit.ByteTransformer;
 import com.ut.killer.http.ResultData;
@@ -34,14 +35,14 @@ public class InstrumentHandler extends JsonResponseHandler {
         List<String> inputClassNames = Arrays.asList("com.imagedance.zpai.controller.ImageController",
                 "com.imagedance.zpai.service.ImageService",
                 "javax.servlet.http.HttpServletRequest");
-        Map<String, List<String>> methodNames = new HashMap<>();
-        methodNames.put("com.imagedance.zpai.controller.ImageController", Arrays.asList("deleteCollectImage"));
-        methodNames.put("com.imagedance.zpai.service.ImageService", Arrays.asList("deleteCollectImage"));
-        methodNames.put("com.imagedance.zpai.service.impl.ImageServiceImpl", Arrays.asList("deleteCollectImage"));
-        methodNames.put("javax.servlet.http.HttpServletRequest", Arrays.asList("getHeaderNames"));
-        methodNames.put("org.apache.catalina.connector.RequestFacade", Arrays.asList("getHeaderNames"));
-        methodNames.put("com.imagedance.zpai.service.ImageMetaService", Arrays.asList("deleteCollectImage"));
-        methodNames.put("com.imagedance.zpai.service.impl.ImageMetaServiceImpl", Arrays.asList("deleteCollectImage"));
+        Map<String, Set<String>> methodNames = new HashMap<>();
+        methodNames.put("com.imagedance.zpai.controller.ImageController", Sets.newHashSet("deleteCollectImage"));
+        methodNames.put("com.imagedance.zpai.service.ImageService", Sets.newHashSet("deleteCollectImage"));
+        methodNames.put("com.imagedance.zpai.service.impl.ImageServiceImpl", Sets.newHashSet("deleteCollectImage"));
+        methodNames.put("javax.servlet.http.HttpServletRequest", Sets.newHashSet("getHeaderNames"));
+        methodNames.put("org.apache.catalina.connector.RequestFacade", Sets.newHashSet("getHeaderNames"));
+        methodNames.put("com.imagedance.zpai.service.ImageMetaService", Sets.newHashSet("deleteCollectImage"));
+        methodNames.put("com.imagedance.zpai.service.impl.ImageMetaServiceImpl", Sets.newHashSet("deleteCollectImage"));
 
 //        Class<?>[] targetClasses = new Class<?>[targetClassNames.size()];
 //        for (int i = 0; i < targetClassNames.size(); i++) {

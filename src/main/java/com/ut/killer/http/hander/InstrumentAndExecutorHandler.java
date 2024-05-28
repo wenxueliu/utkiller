@@ -21,6 +21,9 @@ import java.util.stream.Collectors;
 
 public class InstrumentAndExecutorHandler extends JsonResponseHandler {
     private static final Logger logger = LoggerFactory.getLogger(InstrumentAndExecutorHandler.class);
+
+    Map<String, Set<String>> methodNames = new HashMap<>();
+
     @Override
     public NanoHTTPD.Response handle(NanoHTTPD.IHTTPSession session) {
         try {
@@ -48,10 +51,37 @@ public class InstrumentAndExecutorHandler extends JsonResponseHandler {
         Set<Class<?>> targetClasses =
                 inputClassNames.stream().map(ClazzUtils::getImplementClasses).flatMap(Set::stream).collect(Collectors.toSet());
 
-        Map<String, List<String>> methodNames = instrumentRequest.toClass2Methods();
+        Map<String, Set<String>> newClass2MethodNames = instrumentRequest.toClass2Methods();
+
+        for (String targetClassName : newClass2MethodNames.keySet()) {
+            if (methodNames.containsKey(targetClassName)) {
+                Set<String> newMethodNames = newClass2MethodNames.get(targetClassName);
+                for (String newMethodName : newMethodNames) {
+                    if (methodNames.get(targetClassName).contains(newMethodName)) {
+                        newClass2MethodNames.get(targetClassName).remove(newMethodName);
+                    } else {
+                        methodNames.get(targetClassName).add(newMethodName);
+                    }
+                }
+            } else {
+                methodNames.put(targetClassName, newClass2MethodNames.get(targetClassName));
+            }
+        }
+        if (newClass2MethodNames.isEmpty() || newClass2MethodNames.values().isEmpty()) {
+            return;
+        }
+        boolean isEmpty = true;
+        for (String name : newClass2MethodNames.keySet()) {
+            if (!newClass2MethodNames.get(name).isEmpty()) {
+                isEmpty = false;
+            }
+        }
+        if (isEmpty) {
+            return;
+        }
         ClassPool.getDefault().insertClassPath(new ClassClassPath(HotSwapper.class));
         Instrumentation instrumentation = HotSwapAgentMain.startAgentAndGetInstrumentation();
-        instrumentation.addTransformer(new ByteTransformer(targetClassNames, methodNames), true);
+        instrumentation.addTransformer(new ByteTransformer(targetClassNames, newClass2MethodNames), true);
         instrumentation.retransformClasses(targetClasses.toArray(new Class[0]));
     }
 

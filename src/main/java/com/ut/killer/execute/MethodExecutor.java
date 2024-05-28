@@ -78,6 +78,10 @@ public class MethodExecutor {
                 parameterTypesClass, parameterTypes);
 
         Object methodReturnValue = methodToExecute.invoke(objectInstanceByClass, parameters);
+        logger.info("class: {}, method {}", objectInstanceByClass.getClass().getCanonicalName(), methodToExecute);
+        for (int index = 0; index < parameters.length; index++) {
+            logger.info("parameter{}: {}", index, serializeMethodReturnValue(parameters[index]));
+        }
         Object serializedValue = serializeMethodReturnValue(methodReturnValue);
         return serializedValue;
     }

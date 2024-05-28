@@ -41,8 +41,8 @@ public class InstrumentRequest {
         return classNames;
     }
 
-    public Map<String, List<String>> toClass2Methods() {
-        Map<String, List<String>> class2Methods = new HashMap<>();
+    public Map<String, Set<String>> toClass2Methods() {
+        Map<String, Set<String>> class2Methods = new HashMap<>();
         String classNameByDot = methodRequest.getClassName();
         Set<String> implementClassNames = ClazzUtils.getImplementClassNames(classNameByDot);
         for (String implementClassName : implementClassNames) {
@@ -50,7 +50,7 @@ public class InstrumentRequest {
             if (class2Methods.containsKey(implementClassName)) {
                 class2Methods.get(implementClassName).add(methodName);
             } else {
-                class2Methods.put(implementClassName, new ArrayList<>(Collections.singletonList(methodName)));
+                class2Methods.put(implementClassName, new HashSet<>(Collections.singletonList(methodName)));
             }
         }
 
@@ -61,7 +61,7 @@ public class InstrumentRequest {
                 if (class2Methods.containsKey(implementMockClassName)) {
                     class2Methods.get(implementMockClassName).add(methodName);
                 } else {
-                    class2Methods.put(implementMockClassName, new ArrayList<>(Collections.singletonList(methodName)));
+                    class2Methods.put(implementMockClassName, new HashSet<>(Collections.singletonList(methodName)));
                 }
             }
         }
