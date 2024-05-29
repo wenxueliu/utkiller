@@ -1,10 +1,9 @@
 package com.ut.killer.http;
 
-import com.ut.killer.http.hander.ExecutorHandler;
-import com.ut.killer.http.hander.HttpHandler;
-import com.ut.killer.http.hander.InstrumentAndExecutorHandler;
-import com.ut.killer.http.hander.InstrumentHandler;
+import com.ut.killer.http.hander.*;
 import fi.iki.elonen.NanoHTTPD;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -12,13 +11,15 @@ import java.util.HashMap;
 import static com.ut.killer.http.HttpConstants.JSON_RESPONSE_HEADER;
 
 public class HttpAgentServer extends NanoHTTPD {
+    private static final Logger logger = LoggerFactory.getLogger(StopExecutorHandler.class);
+
     HashMap<String, HttpHandler> url2Handler = new HashMap<>();
 
     public HttpAgentServer(int port) {
         super(port);
-        addHandler("/rest/v1/tree", new InstrumentHandler());
+        addHandler("/rest/v1/start", new StartExecutorHandler());
+        addHandler("/rest/v1/stop", new StopExecutorHandler());
         addHandler("/rest/v1/exec", new ExecutorHandler());
-        addHandler("/rest/v2/exec", new InstrumentAndExecutorHandler());
     }
 
     void addHandler(String url, HttpHandler handler) {
@@ -38,8 +39,8 @@ public class HttpAgentServer extends NanoHTTPD {
                 response.addHeader("Content-Type", JSON_RESPONSE_HEADER);
             }
             return url2Handler.get(uri).handle(session);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ex) {
+            logger.error("server error", ex);
         }
         return newFixedLengthResponse(ResultData.error("uri: " + uri + "\nmethod: " + method
                 + "\nqueryString: " + queryString + "\npostData: " + postData));
@@ -52,6 +53,6 @@ public class HttpAgentServer extends NanoHTTPD {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        System.out.println("all over");
+        logger.info("start agent server in {}", port);
     }
 }

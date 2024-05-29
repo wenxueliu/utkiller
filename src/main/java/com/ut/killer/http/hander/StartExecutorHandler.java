@@ -2,11 +2,9 @@ package com.ut.killer.http.hander;
 
 import com.ut.killer.HotSwapAgentMain;
 import com.ut.killer.bytekit.ByteTransformer;
-import com.ut.killer.classinfo.ClassUtils;
 import com.ut.killer.execute.MethodExecutor;
 import com.ut.killer.http.*;
 import com.ut.killer.parser.ClazzUtils;
-import com.ut.killer.parser.JavaParser;
 import fi.iki.elonen.NanoHTTPD;
 import javassist.ClassClassPath;
 import javassist.ClassPool;
@@ -19,8 +17,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class InstrumentAndExecutorHandler extends JsonResponseHandler {
-    private static final Logger logger = LoggerFactory.getLogger(InstrumentAndExecutorHandler.class);
+public class StartExecutorHandler extends JsonResponseHandler {
+    private static final Logger logger = LoggerFactory.getLogger(StartExecutorHandler.class);
 
     Map<String, Set<String>> methodNames = new HashMap<>();
 

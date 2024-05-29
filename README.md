@@ -21,18 +21,21 @@ UT-Killer是一个基于字节码工具，通过自动拦截Java方法，记录�
     HttpAgentServer.init(8888);
 ```
 
-### 示例
+### 工具类
 
-URL: http://127.0.0.1:8888/rest/v2/exec
+URL: http://127.0.0.1:8888/rest/v1/start
 
-method: POST 
+#### 方法
+POST 
 
-header:
+#### 请求头
+
 ```
 "Content-Type": "application/json"
 ```
 
-body:
+#### 请求体
+
 ```json
 {
   "execRequest": {
@@ -50,16 +53,60 @@ body:
 }
 ```
 
-URL: http://127.0.0.1:8888/rest/v2/exec
+#### 应答体
 
-method: POST
+```json
+{
+  "jobId" : 0,
+  "root" : {
+    "children" : [ {
+      "children" : null,
+      "type" : "method",
+      "className" : "com.imagedance.zpai.utils.JsonUtils",
+      "methodName" : "toUserInfo",
+      "lineNumber" : -1,
+      "args" : [ {
+        "type" : "com.imagedance.zpai.model.UserInfo",
+        "name" : "object",
+        "value" : {
+          "userId" : "123",
+          "userName" : "sssssssss",
+          "description" : null,
+          "createTime" : null,
+          "updateTime" : null
+        }
+      } ],
+      "returnInfo" : null,
+      "throwExp" : null,
+      "invoking" : false,
+      "mock" : false,
+      "throw" : null
+    } ],
+    "type" : "thread",
+    "threadName" : "NanoHttpd Request Processor (#7)",
+    "threadId" : 53,
+    "daemon" : true,
+    "priority" : 5,
+    "classloader" : "sun.misc.Launcher$AppClassLoader@18b4aac2"
+  },
+  "nodeCount" : 1,
+  "type" : "trace"
+} 
+```
 
-header:
+### Spring MVC 案例
+
+URL: http://127.0.0.1:8888/rest/v1/start
+
+#### 方法
+POST
+
+#### 请求头
 ```
 "Content-Type": "application/json"
 ```
 
-body:
+#### 请求体
 ```json
 {
   "execRequest" :{
@@ -81,6 +128,66 @@ body:
 }
 
 ```
+
+#### 应答
+
+```json
+{
+  "jobId" : 0,
+  "root" : {
+    "children" : [ {
+      "children" : [ {
+        "children" : null,
+        "type" : "method",
+        "className" : "com.imagedance.zpai.service.impl.ImageServiceImpl",
+        "methodName" : "deleteCollectImage",
+        "lineNumber" : -1,
+        "args" : [ {
+          "type" : "java.lang.String",
+          "name" : "imageId",
+          "value" : "aaaaaa"
+        }, {
+          "type" : "java.lang.String",
+          "name" : "userId",
+          "value" : "bbbbbb"
+        } ],
+        "returnInfo" : null,
+        "throwExp" : null,
+        "invoking" : false,
+        "mock" : true,
+        "throw" : null
+      } ],
+      "type" : "method",
+      "className" : "com.imagedance.zpai.controller.ImageController",
+      "methodName" : "deleteCollectImage",
+      "lineNumber" : -1,
+      "args" : [ {
+        "type" : "com.imagedance.zpai.model.vo.ImageCollectDeleteVo",
+        "name" : "imageCollectDeleteVo",
+        "value" : {
+          "imageId" : "aaaaaa",
+          "userId" : "bbbbbb"
+        }
+      } ],
+      "returnInfo" : null,
+      "throwExp" : null,
+      "invoking" : false,
+      "mock" : false,
+      "throw" : null
+    } ],
+    "type" : "thread",
+    "threadName" : "NanoHttpd Request Processor (#1)",
+    "threadId" : 47,
+    "daemon" : true,
+    "priority" : 5,
+    "classloader" : "sun.misc.Launcher$AppClassLoader@18b4aac2"
+  },
+  "nodeCount" : 2,
+  "type" : "trace"
+}
+```
+
+
 
 ## 感谢
 

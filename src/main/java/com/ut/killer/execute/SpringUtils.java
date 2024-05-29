@@ -26,7 +26,7 @@ public class SpringUtils {
                 objectInstanceByClass = getBeanMethod.invoke(applicationContext,
                         Class.forName(targetClassName));
             } catch (Exception ex) {
-                logger.error("instance by getBean error", ex);
+                logger.warn("cannot find bean for {}", targetClassName);
             }
         }
         return objectInstanceByClass;
@@ -56,8 +56,8 @@ public class SpringUtils {
                 getBeanDefinitionNamesMethod = applicationContextClass.getMethod("getBeanNamesForType", Class.class,
                         boolean.class, boolean.class);
             }
-        } catch (Throwable e) {
-            e.printStackTrace();
+        } catch (Throwable ex) {
+            logger.error("loadContext error ", ex);
         }
     }
 
@@ -77,8 +77,8 @@ public class SpringUtils {
             springBeanFactory = Class.forName("org.springframework.beans.factory.support.DefaultListableBeanFactory")
                     .cast(getAutowireCapableBeanFactoryMethod.invoke(applicationContext));
             return springBeanFactory;
-        } catch (Throwable e) {
-            e.printStackTrace();
+        } catch (Throwable ex) {
+            logger.error("setSpringApplicationContextAndLoadBeanFactory error ", ex);
         }
         return null;
 
