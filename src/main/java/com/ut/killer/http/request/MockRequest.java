@@ -1,4 +1,4 @@
-package com.ut.killer.http;
+package com.ut.killer.http.request;
 
 import java.util.Objects;
 

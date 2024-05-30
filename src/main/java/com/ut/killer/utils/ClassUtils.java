@@ -1,4 +1,6 @@
-package com.ut.killer.classinfo;
+package com.ut.killer.utils;
+
+import com.ut.killer.classinfo.ArgumentInfo;
 
 import java.util.ArrayList;
 import java.util.List;

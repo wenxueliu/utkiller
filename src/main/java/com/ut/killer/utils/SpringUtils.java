@@ -1,5 +1,6 @@
-package com.ut.killer.execute;
+package com.ut.killer.utils;
 
+import com.ut.killer.execute.InstanceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

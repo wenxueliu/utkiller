@@ -1,4 +1,4 @@
-package com.ut.killer.execute;
+package com.ut.killer.utils;
 
 import com.ut.killer.command.StringUtils;
 

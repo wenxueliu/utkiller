@@ -3,8 +3,7 @@ package com.ut.killer;
 
 import com.google.common.collect.Sets;
 import com.ut.killer.bytekit.ByteTransformer;
-import com.ut.killer.parser.ClazzUtils;
-import com.ut.killer.parser.JavaParser;
+import com.ut.killer.utils.ClazzUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

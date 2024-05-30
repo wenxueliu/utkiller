@@ -5,7 +5,7 @@ import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import com.ut.killer.command.StringUtils;
 import com.ut.killer.http.ResultData;
-import com.ut.killer.http.TreeRequest;
+import com.ut.killer.http.request.TreeRequest;
 import fi.iki.elonen.NanoHTTPD;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,4 +1,6 @@
-package com.ut.killer.execute;
+package com.ut.killer.utils;
+
+import com.ut.killer.execute.PlatformEnum;
 
 import java.io.File;
 import java.util.Locale;

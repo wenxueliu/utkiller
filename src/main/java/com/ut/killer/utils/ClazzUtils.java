@@ -1,6 +1,5 @@
-package com.ut.killer.parser;
+package com.ut.killer.utils;
 
-import com.ut.killer.execute.SpringUtils;
 import com.ut.killer.http.hander.HttpHandler;
 import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;

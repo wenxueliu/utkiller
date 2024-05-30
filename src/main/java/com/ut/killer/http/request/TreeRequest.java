@@ -1,4 +1,6 @@
-package com.ut.killer.http;
+package com.ut.killer.http.request;
+
+import com.ut.killer.http.request.MethodRequest;
 
 import java.util.List;
 

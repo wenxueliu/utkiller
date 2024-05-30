@@ -1,7 +1,7 @@
 package com.ut.killer.http.hander;
 
 import com.ut.killer.execute.MethodExecutor;
-import com.ut.killer.http.ExecRequest;
+import com.ut.killer.http.request.ExecRequest;
 import com.ut.killer.http.ResultData;
 import fi.iki.elonen.NanoHTTPD;
 import org.slf4j.Logger;

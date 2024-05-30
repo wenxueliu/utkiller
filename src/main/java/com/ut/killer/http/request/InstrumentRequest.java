@@ -1,7 +1,6 @@
-package com.ut.killer.http;
+package com.ut.killer.http.request;
 
-import com.ut.killer.classinfo.ClassUtils;
-import com.ut.killer.parser.ClazzUtils;
+import com.ut.killer.utils.ClazzUtils;
 
 import java.util.*;
 

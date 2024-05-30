@@ -2,7 +2,7 @@ package com.ut.killer.command;
 
 
 import com.ut.killer.classinfo.ArgumentInfo;
-import com.ut.killer.classinfo.ClassUtils;
+import com.ut.killer.utils.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
