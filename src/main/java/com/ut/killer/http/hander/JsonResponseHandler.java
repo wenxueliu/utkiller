@@ -2,8 +2,7 @@ package com.ut.killer.http.hander;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ut.killer.http.ResultData;
-import com.ut.killer.http.hander.HttpHandler;
+import com.ut.killer.http.response.ResultData;
 import fi.iki.elonen.NanoHTTPD;
 
 import java.io.IOException;

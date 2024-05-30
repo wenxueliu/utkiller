@@ -1,4 +1,4 @@
-package com.ut.killer.http;
+package com.ut.killer.http.response;
 
 public class ResultData<T> {
     private String code;

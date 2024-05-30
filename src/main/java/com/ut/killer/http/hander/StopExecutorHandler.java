@@ -4,7 +4,7 @@ import com.ut.killer.HotSwapAgentMain;
 import com.ut.killer.bytekit.ByteTransformer;
 import com.ut.killer.http.request.InstrumentAneExecutorRequest;
 import com.ut.killer.http.request.InstrumentRequest;
-import com.ut.killer.http.ResultData;
+import com.ut.killer.http.response.ResultData;
 import com.ut.killer.utils.ClazzUtils;
 import fi.iki.elonen.NanoHTTPD;
 import javassist.ClassClassPath;

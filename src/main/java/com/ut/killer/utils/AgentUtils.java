@@ -1,4 +1,4 @@
-package com.ut.killer.http;
+package com.ut.killer.utils;
 
 import javassist.ClassPool;
 import javassist.CtClass;
