@@ -17,8 +17,9 @@ public class ExecutorHandler extends JsonResponseHandler {
             ExecRequest execRequest = handleRequest(session, ExecRequest.class);
             Object result = handle(execRequest);
             return response(ResultData.success(result));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (Exception ex) {
+            logger.error("handle error", ex);
+            throw new RuntimeException(ex);
         }
     }
 

@@ -97,8 +97,5 @@ public class ClassTypeUtil {
             return typeFactory.constructSimpleType(char.class, null);
         }
         return typeFactory.constructFromCanonical(descriptor);
-
     }
-
-
 }

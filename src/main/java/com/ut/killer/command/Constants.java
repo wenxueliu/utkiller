@@ -1,34 +1,16 @@
 package com.ut.killer.command;
 
-import java.io.File;
-
 /**
- * @author ralf0131 2016-12-28 16:20.
+ * Constants类用于定义常量。
+ * 该类不接受任何参数，也不返回任何值。
  */
 public class Constants {
-
     private Constants() {
     }
 
     /**
-     * 中断提示
-     */
-    public static final String Q_OR_CTRL_C_ABORT_MSG = "Press Q or Ctrl+C to abort.";
-
-    /**
-     * 空字符串
+     * 定义一个常量EMPTY_STRING，其值为空字符串。
+     * 这个常量可以在需要表示空字符串的地方使用，以增强代码的可读性和可维护性。
      */
     public static final String EMPTY_STRING = "";
-
-    /**
-     * 命令提示符
-     */
-    public static final String DEFAULT_PROMPT = "$ ";
-
-    /**
-     * 方法执行耗时
-     */
-    public static final String COST_VARIABLE = "cost";
-
-    public static final String CMD_HISTORY_FILE = System.getProperty("user.home") + File.separator + ".arthas" + File.separator + "history";
 }

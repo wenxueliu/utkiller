@@ -18,8 +18,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 public class ParameterFactory {
-
-
     public static final String MULTI_VALUE_MAP_CLASS = "org.springframework.util.MultiValueMap";
     public static final String LINKED_MULTI_VALUE_MAP = "org.springframework.util.LinkedMultiValueMap";
     private final Objenesis objenesis;
@@ -311,5 +309,4 @@ public class ParameterFactory {
         }
         return typeFactory.constructFromCanonical(classNameToBeConstructed);
     }
-
 }

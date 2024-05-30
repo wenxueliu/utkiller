@@ -11,10 +11,16 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 public class AgentUtils {
-
     private AgentUtils() {
     }
 
+    /**
+     * 创建一个Java代理Jar文件。
+     *
+     * @param clazz 需要包含在Jar文件中的类，通常是一个实现了特定功能的类。
+     * @return 生成的Jar文件的File对象。
+     * @throws Exception 如果创建过程中遇到任何错误，将抛出异常。
+     */
     public static File createJavaAgentJarFile(Class<?> clazz) throws Exception {
         File jar = File.createTempFile("agent", ".jar");
         jar.deleteOnExit();
