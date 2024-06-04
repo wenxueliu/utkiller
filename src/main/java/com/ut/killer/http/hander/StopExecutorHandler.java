@@ -2,6 +2,7 @@ package com.ut.killer.http.hander;
 
 import com.ut.killer.HotSwapAgentMain;
 import com.ut.killer.bytekit.ByteTransformer;
+import com.ut.killer.bytekit.TransformerManager;
 import com.ut.killer.http.request.InstrumentAneExecutorRequest;
 import com.ut.killer.http.request.InstrumentRequest;
 import com.ut.killer.http.response.ResultData;
@@ -43,7 +44,8 @@ public class StopExecutorHandler extends JsonResponseHandler {
         Map<String, Set<String>> newClass2MethodNames = instrumentRequest.toClass2Methods();
         ClassPool.getDefault().insertClassPath(new ClassClassPath(HotSwapper.class));
         Instrumentation instrumentation = HotSwapAgentMain.startAgentAndGetInstrumentation();
-        instrumentation.addTransformer(new ByteTransformer(targetClassNames, newClass2MethodNames), true);
-        instrumentation.retransformClasses(targetClasses.toArray(new Class[0]));
+        TransformerManager.getInstance(instrumentation).destroy();
+//        instrumentation.addTransformer(new ByteTransformer(targetClassNames, newClass2MethodNames), true);
+//        instrumentation.retransformClasses(targetClasses.toArray(new Class[0]));
     }
 }

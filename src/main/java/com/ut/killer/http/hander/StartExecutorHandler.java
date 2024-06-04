@@ -2,6 +2,7 @@ package com.ut.killer.http.hander;
 
 import com.ut.killer.HotSwapAgentMain;
 import com.ut.killer.bytekit.ByteTransformer;
+import com.ut.killer.bytekit.TransformerManager;
 import com.ut.killer.execute.MethodExecutor;
 import com.ut.killer.http.request.ExecRequest;
 import com.ut.killer.http.request.InstrumentAneExecutorRequest;
@@ -15,6 +16,7 @@ import javassist.util.HotSwapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -82,7 +84,9 @@ public class StartExecutorHandler extends JsonResponseHandler {
         }
         ClassPool.getDefault().insertClassPath(new ClassClassPath(HotSwapper.class));
         Instrumentation instrumentation = HotSwapAgentMain.startAgentAndGetInstrumentation();
-        instrumentation.addTransformer(new ByteTransformer(targetClassNames, newClass2MethodNames), true);
+        ClassFileTransformer classFileTransformer = new ByteTransformer(targetClassNames, newClass2MethodNames);
+        TransformerManager.getInstance(instrumentation).addTransformer(classFileTransformer);
+        instrumentation.addTransformer(classFileTransformer, true);
         instrumentation.retransformClasses(targetClasses.toArray(new Class[0]));
     }
 

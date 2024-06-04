@@ -11,12 +11,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.lang.instrument.Instrumentation;
-import java.security.CodeSource;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class InstanceUtils {
     private static final Logger logger = LoggerFactory.getLogger(InstanceUtils.class);
@@ -33,20 +34,9 @@ public class InstanceUtils {
     static {
         String libName = VmToolUtils.detectLibName();
         if (libName != null) {
-            CodeSource codeSource = InstanceUtils.class.getProtectionDomain().getCodeSource();
-            if (codeSource != null) {
-                try {
-                    File bootJarPath = new File(codeSource.getLocation().toURI().getSchemeSpecificPart());
-                    File soFile = new File(bootJarPath.getParentFile(), "lib" + File.separator + libName);
-                    if (soFile.exists()) {
-                        defaultLibPath = soFile.getAbsolutePath();
-                    }
-                } catch (Throwable e) {
-                    logger.error("can not find VmTool so", e);
-                }
-            }
+            // 这里只能是 /，否则会导致读取不到
+            defaultLibPath = "jni/" + libName;
         }
-
     }
 
     public void setClassName(String className) {
@@ -67,7 +57,6 @@ public class InstanceUtils {
 
     public Object getInstance() {
         try {
-//            Instrumentation inst = HotSwapAgentMain.startAgentAndGetInstrumentation();
             Instrumentation inst = ByteBuddyAgent.install();
             if (className == null) {
                 throw new IllegalArgumentException("The className option cannot be empty!");
@@ -85,11 +74,6 @@ public class InstanceUtils {
                     classLoader = matchedClassLoaders.get(0);
                     hashCode = Integer.toHexString(matchedClassLoaders.get(0).hashCode());
                 } else if (matchedClassLoaders.size() > 1) {
-//                        Collection<ClassLoaderVO> classLoaderVOList = ClassUtils
-//                                .createClassLoaderVOList(matchedClassLoaders);
-
-//                        VmToolModel vmToolModel = new VmToolModel().setClassLoaderClass(classLoaderClass)
-//                                .setMatchedClassLoaders(classLoaderVOList);
                     throw new IllegalArgumentException(
                             "Found more than one classloader by class name, please specify classloader with '-c <classloader hash>'");
                 } else {
@@ -103,7 +87,6 @@ public class InstanceUtils {
                     SearchUtils.searchClassOnly(inst, className, false, hashCode));
             int matchedClassSize = matchedClasses.size();
             if (matchedClassSize == 0) {
-//                throw new IllegalArgumentException("Can not find class by class name: " + className + ".");
                 return null;
             } else if (matchedClassSize > 1) {
                 throw new IllegalArgumentException("Found more than one class: " + matchedClasses + ", please specify classloader with '-c <classloader hash>'");
@@ -112,8 +95,7 @@ public class InstanceUtils {
                 if (instances.length > 1) {
                     throw new IllegalArgumentException("Found more than one instance of class: " + matchedClasses.get(0) + ", please specify classloader with '-c <classloader hash>'");
                 }
-                Object value = instances[0];
-                return value;
+                return instances[0];
             }
         } catch (Throwable e) {
             logger.error("vmtool error", e);
@@ -125,22 +107,24 @@ public class InstanceUtils {
         if (vmTool != null) {
             return vmTool;
         } else {
-            libPath = "D:\\下载\\arthas-packaging-3.7.2-bin\\lib\\libArthasJniLibrary-x64.dll";
             if (libPath == null) {
                 libPath = defaultLibPath;
             }
 
             // 尝试把lib文件复制到临时文件里，避免多次attach时出现 Native Library already loaded in another classloader
             FileOutputStream tmpLibOutputStream = null;
-            FileInputStream libInputStream = null;
+            InputStream libInputStream = null;
             try {
                 File tmpLibFile = File.createTempFile(VmTool.JNI_LIBRARY_NAME, null);
                 tmpLibOutputStream = new FileOutputStream(tmpLibFile);
-                libInputStream = new FileInputStream(libPath);
-
-                IOUtils.copy(libInputStream, tmpLibOutputStream);
-                libPath = tmpLibFile.getAbsolutePath();
-                logger.debug("copy {} to {}", libPath, tmpLibFile);
+                libInputStream = InstanceUtils.class.getClassLoader().getResourceAsStream(libPath);
+                if (Objects.nonNull(libInputStream)) {
+                    IOUtils.copy(libInputStream, tmpLibOutputStream);
+                    libPath = tmpLibFile.getAbsolutePath();
+                    logger.debug("copy {} to {}", libPath, tmpLibFile);
+                } else {
+                    logger.error("can not find lib: {}", libPath);
+                }
             } catch (Throwable e) {
                 logger.error("try to copy lib error! libPath: {}", libPath, e);
             } finally {

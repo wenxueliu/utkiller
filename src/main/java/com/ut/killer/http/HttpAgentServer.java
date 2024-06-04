@@ -14,7 +14,7 @@ import static com.ut.killer.http.HttpConstants.JSON_RESPONSE_HEADER;
 public class HttpAgentServer extends NanoHTTPD {
     private static final Logger logger = LoggerFactory.getLogger(StopExecutorHandler.class);
 
-    HashMap<String, HttpHandler> url2Handler = new HashMap<>();
+    private HashMap<String, HttpHandler> url2Handler = new HashMap<>();
 
     public HttpAgentServer(int port) {
         super(port);
