@@ -1,6 +1,4 @@
-package com.ut.killer.parser;
-
-import com.ut.killer.utils.DependencyParser;
+package com.ut.killer.parser.sourcecode;
 
 import java.util.ArrayList;
 import java.util.HashSet;

@@ -1,4 +1,4 @@
-package com.ut.killer.parser;
+package com.ut.killer.parser.sourcecode;
 
 import java.util.ArrayList;
 import java.util.List;

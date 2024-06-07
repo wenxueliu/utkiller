@@ -1,4 +1,4 @@
-package com.ut.killer.parser;
+package com.ut.killer.parser.sourcecode;
 
 public class FieldInfo {
     private String name;

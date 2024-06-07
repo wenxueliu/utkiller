@@ -1,4 +1,4 @@
-package com.ut.killer.parser;
+package com.ut.killer.parser.sourcecode;
 
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
