@@ -18,7 +18,13 @@ public class TreeHandler extends JsonResponseHandler {
         MethodDependencyParser methodDependencyParser = getMethodDependencyParser(methodDependencyRequest);
         String className = methodDependencyRequest.getClassPath();
         String methodName = methodDependencyRequest.getMethodName();
-        ClassDependency classDependency = methodDependencyParser.parseClassDependencies(className, methodName);
+        String methodSignature = methodDependencyRequest.getMethodSignature();
+        ClassDependency classDependency;
+        if (Objects.nonNull(methodSignature)) {
+            classDependency = methodDependencyParser.parseClassDependencies(className, methodName, methodSignature);
+        } else {
+            classDependency = methodDependencyParser.parseClassDependencies(className, methodName);
+        }
         classDependency.setFlatMethodDependencies(classDependency.flattenDependencies());
         return response(ResultData.success(classDependency));
     }

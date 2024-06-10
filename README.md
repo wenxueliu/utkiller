@@ -21,7 +21,70 @@ UT-Killer是一个基于字节码工具，通过自动拦截Java方法，记录�
     HttpAgentServer.init(8888);
 ```
 
-### 工具类
+## 案例
+
+### 打印类的依赖关系
+
+URL: http://127.0.0.1:8888/rest/v1/tree
+
+#### 方法
+POST
+
+#### 请求头
+
+```
+"Content-Type": "application/json"
+```
+
+#### 请求体
+
+```json
+{
+    "classPath": "com.imagedance.zpai.controller.ImageController",
+    "methodName": "queryCollectImages",
+    "excludeClassPaths": [],
+    "includeClassPaths": ["com.imagedance.zpai.service", "com.imagedance.zpai.dao"]
+}
+```
+
+#### 应答体
+
+```json
+{
+    "code": "0",
+    "msg": "success",
+    "data": {
+        "className": "com.imagedance.zpai.controller.ImageController",
+        "methodDependencies": [
+            {
+                "className": "com.imagedance.zpai.controller.ImageController",
+                "methodName": "queryCollectImages",
+                "dependencies": [
+                    {
+                        "className": "com.imagedance.zpai.service.impl.ImageServiceImpl",
+                        "methodName": "queryCollectImages",
+                        "dependencies": [
+                            {
+                                "className": "com.imagedance.zpai.service.impl.ImageMetaServiceImpl",
+                                "methodName": "queryCollectImages",
+                                "dependencies": []
+                            },
+                            {
+                                "className": "com.imagedance.zpai.service.impl.ImageMetaServiceImpl",
+                                "methodName": "queryImages",
+                                "dependencies": []
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "classDependencies": []
+    }
+}
+```
+
+### 启动
 
 URL: http://127.0.0.1:8888/rest/v1/start
 

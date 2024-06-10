@@ -90,4 +90,47 @@ public class StartExecutorHandler extends JsonResponseHandler {
         instrumentation.retransformClasses(targetClasses.toArray(new Class[0]));
     }
 
+    public void handleInstrument1(InstrumentRequest instrumentRequest) throws Exception {
+        Set<String> inputClassNames = instrumentRequest.toClassNames();
+        Set<String> targetClassNames =
+                inputClassNames.stream().map(ClazzUtils::getImplementClassNames).flatMap(Set::stream).collect(Collectors.toSet());
+        logger.info("agentmain target classes {}", targetClassNames);
+        Set<Class<?>> targetClasses =
+                inputClassNames.stream().map(ClazzUtils::getImplementClasses).flatMap(Set::stream).collect(Collectors.toSet());
+
+        Map<String, Set<String>> newClass2MethodNames = instrumentRequest.toClass2Methods();
+
+        for (String targetClassName : newClass2MethodNames.keySet()) {
+            if (methodNames.containsKey(targetClassName)) {
+                Set<String> newMethodNames = newClass2MethodNames.get(targetClassName);
+                for (String newMethodName : newMethodNames) {
+                    if (methodNames.get(targetClassName).contains(newMethodName)) {
+                        newClass2MethodNames.get(targetClassName).remove(newMethodName);
+                    } else {
+                        methodNames.get(targetClassName).add(newMethodName);
+                    }
+                }
+            } else {
+                methodNames.put(targetClassName, newClass2MethodNames.get(targetClassName));
+            }
+        }
+        if (newClass2MethodNames.isEmpty() || newClass2MethodNames.values().isEmpty()) {
+            return;
+        }
+        boolean isEmpty = true;
+        for (String name : newClass2MethodNames.keySet()) {
+            if (!newClass2MethodNames.get(name).isEmpty()) {
+                isEmpty = false;
+            }
+        }
+        if (isEmpty) {
+            return;
+        }
+        ClassPool.getDefault().insertClassPath(new ClassClassPath(HotSwapper.class));
+        Instrumentation instrumentation = HotSwapAgentMain.startAgentAndGetInstrumentation();
+        ClassFileTransformer classFileTransformer = new ByteTransformer(targetClassNames, newClass2MethodNames);
+        TransformerManager.getInstance(instrumentation).addTransformer(classFileTransformer);
+        instrumentation.addTransformer(classFileTransformer, true);
+        instrumentation.retransformClasses(targetClasses.toArray(new Class[0]));
+    }
 }

@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class MethodDependencyParser {
     private static final Logger logger = LoggerFactory.getLogger(MethodDependencyParser.class);
@@ -29,7 +31,7 @@ public class MethodDependencyParser {
 
     public MethodDependencyParser() {
         this.excludeDependencies.addAll(Arrays.asList("java.lang", "java.util", "java.io", "java.nio",
-                "java.net", "java.math", "java.util", "org.slf4j", "javassist", "com.fasterxml",
+                "java.net", "java.math", "org.slf4j", "javassist", "com.fasterxml",
                 "net.bytebuddy", "org.springframework", "org.apache.commons.lang3"));
     }
 
@@ -49,78 +51,104 @@ public class MethodDependencyParser {
     }
 
     public ClassDependency parseClassDependencies(String className) throws NotFoundException {
+        return parseClassDependencies(className, method -> true);
+    }
+
+    public ClassDependency parseClassDependencies(String className, String methodName, String methodSignature) throws NotFoundException {
+        return parseClassDependencies(className, method -> method.getName().equals(methodName) && method.getSignature().equals(methodSignature));
+    }
+
+    public ClassDependency parseClassDependencies(String className, String methodName) throws NotFoundException {
+        return parseClassDependencies(className, method -> method.getName().equals(methodName));
+    }
+
+    private ClassDependency parseClassDependencies(String className, Predicate<CtMethod> methodMatcher) throws NotFoundException {
         CtClass ctClass = pool.get(className);
         ClassDependency classDependency = new ClassDependency();
         classDependency.setClassName(ctClass.getName());
-        for (CtMethod method : ctClass.getDeclaredMethods()) {
-            MethodDependency methodDependency = parseMethodDependencies(method);
-            classDependency.addMethodDependency(methodDependency);
-        }
+        classDependency.addMethodDependencies(parseMethodDependencies(ctClass, methodMatcher));
         return classDependency;
     }
 
-    public ClassDependency parseClassDependencies(String className, String methodName) throws NotFoundException, IOException {
-        CtClass ctClass = pool.get(className);
-        ClassDependency classDependency = new ClassDependency();
-        classDependency.setClassName(ctClass.getName());
-        // 解决重载方法，因此用循环
-        for (CtMethod method : ctClass.getDeclaredMethods()) {
-            if (method.getName().equals(methodName)) {
-                MethodDependency methodDependency = parseMethodDependencies(method);
-                classDependency.addMethodDependency(methodDependency);
-            }
-        }
-        return classDependency;
+    private Set<MethodDependency> parseMethodDependencies(CtClass ctClass, Predicate<CtMethod> methodMatcher) {
+        return Arrays.stream(ctClass.getDeclaredMethods())
+                .filter(methodMatcher)
+                .map(this::parseMethodDependencies)
+                .collect(Collectors.toSet());
     }
 
-    private MethodDependency parseMethodDependencies(CtMethod method) throws NotFoundException {
+    private MethodDependency parseMethodDependencies(CtMethod method) {
         String methodId = getMethodId(method);
         if (parsedMethods.containsKey(methodId)) {
             return parsedMethods.get(methodId);
         }
         // 如果递归，则返回一个循环依赖对象
-        if (visitingMethods.contains(methodId)) {
+        if (isVisitingMethod(methodId)) {
             MethodDependency circularDependency = new MethodDependency();
             circularDependency.setClassName(method.getDeclaringClass().getName());
             circularDependency.setMethodName(method.getName());
+            circularDependency.setMethodSignature(method.getSignature());
             return circularDependency;
         }
-        visitingMethods.add(methodId);
+        startVisitingMethod(methodId);
+        MethodDependency methodDependency = buildMethodDependency(method);
+        parsedMethods.put(methodId, methodDependency);
+        finishVisitingMethod(methodId);
+        return methodDependency;
+    }
+
+    private MethodDependency buildMethodDependency(CtMethod method) {
         MethodDependency methodDependency = new MethodDependency();
         methodDependency.setClassName(method.getDeclaringClass().getName());
         methodDependency.setMethodName(method.getName());
         methodDependency.setMethodSignature(method.getSignature());
-        parsedMethods.put(methodId, methodDependency);
-        List<MethodSign> methodSignDependencies = getMethodDependencies(method);
+        methodDependency.addDependencies(getMethodDependencySet(method));
+        return methodDependency;
+    }
+
+    private boolean isVisitingMethod(String methodId) {
+        return visitingMethods.contains(methodId);
+    }
+
+    private void startVisitingMethod(String methodId) {
+        visitingMethods.add(methodId);
+    }
+
+    private void finishVisitingMethod(String methodId) {
+        visitingMethods.remove(methodId);
+    }
+
+    private Set<MethodDependency> getMethodDependencySet(CtMethod method) {
+        Set<MethodDependency> dependencies = new HashSet<>();
+        List<MethodSign> methodSignDependencies = parseMethodDependenciesFromCtMethod(method);
         for (MethodSign methodSignDependency : methodSignDependencies) {
-            List<CtMethod> dependencyCtMethods = findMethod(methodSignDependency);
+            List<CtMethod> dependencyCtMethods = toCtMethod(methodSignDependency);
             if (!dependencyCtMethods.isEmpty()) {
                 for (CtMethod dependencyCtMethod : dependencyCtMethods) {
                     MethodDependency dependency = parseMethodDependencies(dependencyCtMethod);
-                    methodDependency.addDependency(dependency);
+                    dependencies.add(dependency);
                 }
             } else {
                 logger.warn("Method not found: {}", methodSignDependency);
             }
         }
-        visitingMethods.remove(methodId);
-        return methodDependency;
+        return dependencies;
     }
 
     private static String getMethodId(CtMethod method) {
         return method.getDeclaringClass().getName() + "." + method.getName() + " " + method.getSignature();
     }
 
-    private List<MethodSign> getMethodDependencies(CtMethod method) {
+    private List<MethodSign> parseMethodDependenciesFromCtMethod(CtMethod method) {
         List<MethodSign> dependencies = new ArrayList<>();
-        List<CtMethod> overrideMethods = findOverrideMethods(method);
-        for (CtMethod overrideMethod : overrideMethods) {
-            dependencies.addAll(getMethodSignForDependencies(overrideMethod));
+        List<CtMethod> implMethods = getImplMethods(method);
+        for (CtMethod implMethod : implMethods) {
+            dependencies.addAll(parseCtMethodDependenciesFromImplMethod(implMethod));
         }
         return dependencies;
     }
 
-    private List<MethodSign> getMethodSignForDependencies(CtMethod method) {
+    private List<MethodSign> parseCtMethodDependenciesFromImplMethod(CtMethod method) {
         List<MethodSign> dependencies = new ArrayList<>();
         MethodInfo methodInfo = method.getMethodInfo();
         CodeAttribute codeAttribute = methodInfo.getCodeAttribute();
@@ -181,71 +209,74 @@ public class MethodDependencyParser {
                 op == CodeIterator.INVOKESPECIAL;
     }
 
-    private List<CtMethod> findMethod(MethodSign methodSign) {
+    private CtClass getClassFromPool(String className) {
+        try {
+            return pool.get(className);
+        } catch (NotFoundException ex) {
+            logger.error("pool.get error: ", ex);
+            return null;
+        }
+    }
+
+    private List<CtMethod> toCtMethod(MethodSign methodSign) {
         String className = methodSign.getClassName();
         List<CtMethod> findMethods = new ArrayList<>();
 
-        CtClass ctClass;
-        try {
-            ctClass = pool.get(className);
-        } catch (NotFoundException ex) {
-            logger.error("pool.get error: ", ex);
+        CtClass ctClass = getClassFromPool(className);
+        if (Objects.isNull(ctClass)) {
             return findMethods;
         }
 
         // 如果是接口，则需要找到实现该接口的具体类
         if (ctClass.isInterface()) {
             // 获取所有实现该接口的类
-            Set<String> implementingClassNames = ClazzUtils.getImplementClassNames(ctClass.getName());
-            for (String implementingClassName : implementingClassNames) {
-                CtClass implClass;
-                try {
-                    implClass = pool.get(implementingClassName);
-                } catch (NotFoundException ex) {
-                    logger.error("pool.get error: ", ex);
-                    continue;
-                }
-                for (CtMethod method : implClass.getDeclaredMethods()) {
-                    if (isOverrideMethod(methodSign, method)) {
-                        findMethods.add(method);
-                    }
-                }
-            }
+            findMethods.addAll(findImplMethodsForInterface(ctClass, methodSign));
         } else {
             // 对于非接口类，按照原来的逻辑处理
-            for (CtMethod method : ctClass.getDeclaredMethods()) {
-                if (methodSign.isEqual(method)) {
-                    findMethods.add(method);
-                }
-            }
+            findMethods.addAll(findMethodsForClass(ctClass, methodSign));
         }
         return findMethods;
     }
 
-    public List<CtMethod> findOverrideMethods(CtMethod method) {
+    private List<CtMethod> findImplMethodsForInterface(CtClass interfaceClass, MethodSign methodSign) {
+        return findMethodsInImplementingClasses(interfaceClass, method -> isOverrideMethod(methodSign, method));
+    }
+
+    private List<CtMethod> findMethodsForClass(CtClass ctClass, MethodSign methodSign) {
+        List<CtMethod> foundMethods = new ArrayList<>();
+        for (CtMethod method : ctClass.getDeclaredMethods()) {
+            if (methodSign.isEqual(method)) {
+                foundMethods.add(method);
+            }
+        }
+        return foundMethods;
+    }
+
+
+    public List<CtMethod> getImplMethods(CtMethod method) {
         CtClass ctClass = method.getDeclaringClass();
-        List<CtMethod> findMethods = new ArrayList<>();
         if (ctClass.isInterface()) {
             // 获取所有实现该接口的类
-            Set<String> implementingClassNames = ClazzUtils.getImplementClassNames(ctClass.getName());
-            for (String implementingClassName : implementingClassNames) {
-                CtClass implClass;
-                try {
-                    implClass = pool.get(implementingClassName);
-                } catch (NotFoundException ex) {
-                    logger.error("pool.get error: ", ex);
-                    continue;
-                }
-                for (CtMethod declaredMethod : implClass.getDeclaredMethods()) {
-                    if (declaredMethod.equals(method)) {
-                        findMethods.add(declaredMethod);
+            return findMethodsInImplementingClasses(ctClass, declaredMethod -> declaredMethod.equals(method));
+        } else {
+            return Collections.singletonList(method);
+        }
+    }
+
+    private List<CtMethod> findMethodsInImplementingClasses(CtClass interfaceClass, Predicate<CtMethod> predicate) {
+        List<CtMethod> foundMethods = new ArrayList<>();
+        Set<String> implementingClassNames = ClazzUtils.getImplementClassNames(interfaceClass.getName());
+        for (String implementingClassName : implementingClassNames) {
+            CtClass implClass = getClassFromPool(implementingClassName);
+            if (Objects.nonNull(implClass)) {
+                for (CtMethod method : implClass.getDeclaredMethods()) {
+                    if (predicate.test(method)) {
+                        foundMethods.add(method);
                     }
                 }
             }
-        } else {
-            findMethods.add(method);
         }
-        return findMethods;
+        return foundMethods;
     }
 
     public boolean isOverrideMethod(MethodSign methodSign, CtMethod method) {

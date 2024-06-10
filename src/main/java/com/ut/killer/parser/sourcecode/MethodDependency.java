@@ -32,7 +32,11 @@ public class MethodDependency {
     }
 
     public void addDependency(MethodDependency dependency) {
-        dependencies.add(dependency);
+        this.dependencies.add(dependency);
+    }
+
+    public void addDependencies(Set<MethodDependency> dependencies) {
+        this.dependencies.addAll(dependencies);
     }
 
     public String getMethodName() {

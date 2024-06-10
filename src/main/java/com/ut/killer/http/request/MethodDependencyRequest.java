@@ -1,5 +1,6 @@
 package com.ut.killer.http.request;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class MethodDependencyRequest {
@@ -7,9 +8,11 @@ public class MethodDependencyRequest {
 
     private String methodName;
 
-    private Set<String> includeClassPaths;
+    private String methodSignature;
 
-    private Set<String> excludeClassPaths;
+    private Set<String> includeClassPaths = new HashSet<>();
+
+    private Set<String> excludeClassPaths = new HashSet<>();
 
 
     public String getMethodName() {
@@ -42,5 +45,13 @@ public class MethodDependencyRequest {
 
     public void setExcludeClassPaths(Set<String> excludeClassPaths) {
         this.excludeClassPaths = excludeClassPaths;
+    }
+
+    public String getMethodSignature() {
+        return methodSignature;
+    }
+
+    public void setMethodSignature(String methodSignature) {
+        this.methodSignature = methodSignature;
     }
 }

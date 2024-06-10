@@ -6,13 +6,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ClassDependency {
-    String className;
+    private String className;
 
-    Set<MethodDependency> methodDependencies = new HashSet<>();
+    private Set<MethodDependency> methodDependencies = new HashSet<>();
 
-    Set<ClassDependency> classDependencies = new HashSet<>();
+    private Set<ClassDependency> classDependencies = new HashSet<>();
 
-    Set<MethodDependency> flatMethodDependencies = new HashSet<>();
+    private Set<MethodDependency> flatMethodDependencies = new HashSet<>();
 
     public String getClassName() {
         return className;
@@ -22,12 +22,20 @@ public class ClassDependency {
         this.className = className;
     }
 
-    void addMethodDependency(MethodDependency methodDependency) {
-        methodDependencies.add(methodDependency);
+    public void addMethodDependency(MethodDependency methodDependency) {
+        this.methodDependencies.add(methodDependency);
     }
 
-    void removeMethodDependency(MethodDependency methodDependency) {
-        methodDependencies.remove(methodDependency);
+    public void addMethodDependencies(Set<MethodDependency> methodDependencies) {
+        this.methodDependencies.addAll(methodDependencies);
+    }
+
+    public void removeMethodDependency(MethodDependency methodDependency) {
+        this.methodDependencies.remove(methodDependency);
+    }
+
+    public void removeMethodDependencies(Set<MethodDependency> methodDependencies) {
+        this.methodDependencies.removeAll(methodDependencies);
     }
 
     public Set<ClassDependency> getClassDependencies() {
@@ -38,11 +46,11 @@ public class ClassDependency {
         this.classDependencies = classDependencies;
     }
 
-    void addClassDependency(ClassDependency classDependency) {
+    public void addClassDependency(ClassDependency classDependency) {
         this.classDependencies.add(classDependency);
     }
 
-    void removeClassDependency(ClassDependency classDependency) {
+    public void removeClassDependency(ClassDependency classDependency) {
         this.classDependencies.remove(classDependency);
     }
 
