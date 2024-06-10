@@ -79,9 +79,7 @@ public class MethodDependency {
         while (!queue.isEmpty()) {
             MethodDependency node = queue.poll();
             allDependencies.add(node);
-            for (MethodDependency dependency : node.getDependencies()) {
-                queue.add(dependency);
-            }
+            queue.addAll(node.getDependencies());
         }
         return allDependencies;
     }
