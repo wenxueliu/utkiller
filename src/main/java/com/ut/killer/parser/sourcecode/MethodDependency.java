@@ -3,8 +3,7 @@ package com.ut.killer.parser.sourcecode;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MethodDependency {
@@ -13,6 +12,9 @@ public class MethodDependency {
 
     @JsonProperty("methodName")
     private String methodName;
+
+    @JsonProperty("methodSignature")
+    private String methodSignature;
 
     @JsonProperty("dependencies")
     private Set<MethodDependency> dependencies = new HashSet<>();
@@ -37,7 +39,50 @@ public class MethodDependency {
         return methodName;
     }
 
+    public String getMethodSignature() {
+        return methodSignature;
+    }
+
+    public void setMethodSignature(String methodSignature) {
+        this.methodSignature = methodSignature;
+    }
+
     public Set<MethodDependency> getDependencies() {
         return dependencies;
+    }
+
+    public void setDependencies(Set<MethodDependency> dependencies) {
+        this.dependencies = dependencies;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof MethodDependency) {
+            MethodDependency methodDependency = (MethodDependency) obj;
+            return methodDependency.getClassName().equals(this.getClassName()) &&
+                    methodDependency.getMethodName().equals(this.getMethodName()) &&
+                    methodDependency.getMethodSignature().equals(this.getMethodSignature());
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(className, methodName, methodSignature);
+    }
+
+    public static Set<MethodDependency> flattenDependencies(MethodDependency root) {
+        Set<MethodDependency> allDependencies = new HashSet<>();
+        Queue<MethodDependency> queue = new LinkedList<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            MethodDependency node = queue.poll();
+            allDependencies.add(node);
+            for (MethodDependency dependency : node.getDependencies()) {
+                queue.add(dependency);
+            }
+        }
+        return allDependencies;
     }
 }

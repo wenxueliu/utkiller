@@ -21,6 +21,7 @@ public class HttpAgentServer extends NanoHTTPD {
         addHandler("/rest/v1/start", new StartExecutorHandler());
         addHandler("/rest/v1/stop", new StopExecutorHandler());
         addHandler("/rest/v1/exec", new ExecutorHandler());
+        addHandler("/rest/v1/tree", new TreeHandler());
     }
 
     void addHandler(String url, HttpHandler handler) {

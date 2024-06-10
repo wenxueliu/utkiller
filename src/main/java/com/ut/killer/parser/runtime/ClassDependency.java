@@ -12,6 +12,8 @@ public class ClassDependency {
 
     Set<ClassDependency> classDependencies = new HashSet<>();
 
+    Set<MethodDependency> flatMethodDependencies = new HashSet<>();
+
     public String getClassName() {
         return className;
     }
@@ -50,5 +52,21 @@ public class ClassDependency {
 
     public Set<MethodDependency> getMethodDependencies() {
         return methodDependencies;
+    }
+
+    public void setFlatMethodDependencies(Set<MethodDependency> flatMethodDependencies) {
+        this.flatMethodDependencies = flatMethodDependencies;
+    }
+
+    public Set<MethodDependency> getFlatMethodDependencies() {
+        return flatMethodDependencies;
+    }
+
+    public Set<MethodDependency> flattenDependencies() {
+        Set<MethodDependency> flatMethodDependencies = new HashSet<>();
+        for (MethodDependency methodDependency : methodDependencies) {
+            flatMethodDependencies.addAll(MethodDependency.flattenDependencies(methodDependency));
+        }
+        return flatMethodDependencies;
     }
 }
