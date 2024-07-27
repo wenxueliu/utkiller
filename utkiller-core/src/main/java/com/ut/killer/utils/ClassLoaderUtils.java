@@ -17,6 +17,27 @@ import java.util.Set;
  *
  */
 public class ClassLoaderUtils {
+    /**
+     * <pre>
+     * 1. 全局持有classloader用于隔离 Arthas 实现，防止多次attach重复初始化
+     * 2. ClassLoader在arthas停止时会被reset
+     * 3. 如果ClassLoader一直没变，则 com.taobao.arthas.core.server.ArthasBootstrap#getInstance 返回结果一直是一样的
+     * </pre>
+     */
+//    private static volatile ClassLoader arthasClassLoader;
+//
+//    private static ClassLoader getClassLoader(Instrumentation inst, File arthasCoreJarFile) throws Throwable {
+//        // 构造自定义的类加载器，尽量减少Arthas对现有工程的侵蚀
+//        return loadOrDefineClassLoader(arthasCoreJarFile);
+//    }
+//
+//    private static ClassLoader loadOrDefineClassLoader(File arthasCoreJarFile) throws Throwable {
+//        if (arthasClassLoader == null) {
+//            arthasClassLoader = new ArthasClassloader(new URL[]{arthasCoreJarFile.toURI().toURL()});
+//        }
+//        return arthasClassLoader;
+//    }
+
 
     public static Set<ClassLoader> getAllClassLoader(Instrumentation inst) {
         Set<ClassLoader> classLoaderSet = new HashSet<ClassLoader>();
