@@ -24,29 +24,21 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>attached</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <descriptorRefs>
-                                <descriptorRef>jar-with-dependencies</descriptorRef>
-                            </descriptorRefs>
-                            <archive>
-                                <manifestEntries>
-                                    <Premain-Class>ut.killer.AgentLauncher</Premain-Class>
-                                    <Agent-Class>ut.killer.AgentLauncher</Agent-Class>
-                                    <Can-Redefine-Classes>true</Can-Redefine-Classes>
-                                    <Can-Retransform-Classes>true</Can-Retransform-Classes>
-                                    <Can-Set-Native-Method-Prefix>true</Can-Set-Native-Method-Prefix>
-                                </manifestEntries>
-                            </archive>
-                        </configuration>
-                    </execution>
-                </executions>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                        </manifest>
+                        <manifestEntries>
+                            <Premain-Class>ut.killer.AgentLauncher</Premain-Class>
+                            <Agent-Class>ut.killer.AgentLauncher</Agent-Class>
+                            <Can-Redefine-Classes>true</Can-Redefine-Classes>
+                            <Can-Retransform-Classes>true</Can-Retransform-Classes>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
             </plugin>
         </plugins>
     </build>

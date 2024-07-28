@@ -46,6 +46,7 @@ public class AgentLauncher {
      * @param inst          inst
      */
     public static void agentmain(String featureString, Instrumentation inst) {
+        System.out.println("start agent");
         install(toFeatureMap(featureString), inst);
     }
 
@@ -60,7 +61,7 @@ public class AgentLauncher {
                     getSandboxSpyJarPath(home)
                     // SANDBOX_SPY_JAR_PATH
             )));
-
+            System.out.println(home);
             // 构造自定义的类加载器，尽量减少Sandbox对现有工程的侵蚀
             final ClassLoader sandboxClassLoader = loadOrDefineClassLoader(
                     namespace,
@@ -68,7 +69,7 @@ public class AgentLauncher {
             );
 
             Class<?> httpAgentServer = sandboxClassLoader.loadClass("com.ut.killer.http.HttpAgentServer");
-            httpAgentServer.getMethod("init", Integer.class).invoke(port);
+            httpAgentServer.getMethod("begin", Integer.class).invoke(null, port);
         } catch (Throwable cause) {
             throw new RuntimeException("utkiller attach failed.", cause);
         }
@@ -150,6 +151,6 @@ public class AgentLauncher {
     }
 
     private static String getSandboxCoreJarPath(String home) {
-        return home + File.separatorChar + "lib" + File.separator + "sandbox-core.jar";
+        return home + File.separatorChar + "lib" + File.separator + "utkiller-core.jar";
     }
 }

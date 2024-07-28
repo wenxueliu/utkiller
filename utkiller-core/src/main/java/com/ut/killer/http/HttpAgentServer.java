@@ -49,7 +49,7 @@ public class HttpAgentServer extends NanoHTTPD {
                 + "\nqueryString: " + queryString + "\npostData: " + postData));
     }
 
-    public static void init(int port) {
+    public static void begin(Integer port) {
         HttpAgentServer httpServer = new HttpAgentServer(port);
         try {
             httpServer.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);

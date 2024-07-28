@@ -1,8 +1,10 @@
 package com.ut.killer;
 
 import com.sun.tools.attach.VirtualMachine;
+import com.sun.tools.attach.VirtualMachineDescriptor;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.IOException;
 import java.util.Objects;
 
 public class UtKillerMain {
@@ -26,10 +28,19 @@ public class UtKillerMain {
         }
     }
 
-    private static void attachAgent(final String targetJvmPid,
+    private static void attachAgent(final String mainClassPath,
                                     final String agentJarPath,
                                     final String cfg) throws Exception {
 
+        for (VirtualMachineDescriptor descriptor : VirtualMachine.list()) {
+            System.out.println(descriptor.displayName());
+            if (descriptor.displayName().equals(mainClassPath)) {
+                attachPid(descriptor.id(), agentJarPath, cfg);
+            }
+        }
+    }
+
+    private static void attachPid(String targetJvmPid, String agentJarPath, String cfg) throws IOException {
         VirtualMachine vmObj = null;
         try {
             vmObj = VirtualMachine.attach(targetJvmPid);
