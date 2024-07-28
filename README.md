@@ -623,3 +623,23 @@ public class ThreadNode extends TraceNode {
   "type" : "trace"
 }
 ```
+
+## 调试
+
+1、主程序（被 agentmain attach 的进程）增加如下 JVM 参数
+
+-Xrunjdwp:transport=dt_socket,server=y,address=8001
+
+主程序正常启动（不要调试启动），将会被阻塞，直到远程调试程序连接上 8001 端口。输出如下内容，并阻塞
+
+Listening for transport dt_socket at address: 8001
+
+2、在有 agentmain 工程增加一个 Remote JVM Debug，端口为 8001。如下配置
+
+-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8001
+
+3、运行远程调试， 主程序将会被启动。
+
+4、在 agentmain 工程打上断点， 然后正常运行 Agent-main 程序
+
+5、远程调试将会暂停到相应断点处，接下来调试就跟普通 Debug 模式一样
