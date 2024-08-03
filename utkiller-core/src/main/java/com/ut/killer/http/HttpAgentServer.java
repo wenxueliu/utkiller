@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.instrument.Instrumentation;
 import java.util.HashMap;
 
 import static com.ut.killer.http.HttpConstants.JSON_RESPONSE_HEADER;
@@ -16,10 +17,12 @@ public class HttpAgentServer extends NanoHTTPD {
 
     private HashMap<String, HttpHandler> url2Handler = new HashMap<>();
 
-    public HttpAgentServer(int port) {
+
+
+    public HttpAgentServer(int port, Instrumentation inst) {
         super(port);
-        addHandler("/rest/v1/start", new StartExecutorHandler());
-        addHandler("/rest/v1/stop", new StopExecutorHandler());
+        addHandler("/rest/v1/start", new StartExecutorHandler(inst));
+        addHandler("/rest/v1/stop", new StopExecutorHandler(inst));
         addHandler("/rest/v1/exec", new ExecutorHandler());
         addHandler("/rest/v1/tree", new TreeHandler());
         addHandler("/rest/v1/all", new AllInOneExecutorHandler());
@@ -49,8 +52,9 @@ public class HttpAgentServer extends NanoHTTPD {
                 + "\nqueryString: " + queryString + "\npostData: " + postData));
     }
 
-    public static void begin(Integer port) {
-        HttpAgentServer httpServer = new HttpAgentServer(port);
+    public static void begin(Integer port, Instrumentation inst) {
+//        Instrumentation inst = HotSwapAgentMain.startAgentAndGetInstrumentation();
+        HttpAgentServer httpServer = new HttpAgentServer(port, inst);
         try {
             httpServer.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
         } catch (IOException e) {

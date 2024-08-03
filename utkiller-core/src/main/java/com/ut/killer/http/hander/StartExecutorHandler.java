@@ -1,6 +1,5 @@
 package com.ut.killer.http.hander;
 
-import com.ut.killer.HotSwapAgentMain;
 import com.ut.killer.bytekit.ByteTransformer;
 import com.ut.killer.bytekit.TransformerManager;
 import com.ut.killer.execute.MethodExecutor;
@@ -19,13 +18,21 @@ import org.slf4j.LoggerFactory;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class StartExecutorHandler extends JsonResponseHandler {
     private static final Logger logger = LoggerFactory.getLogger(StartExecutorHandler.class);
 
-    Map<String, Set<String>> methodNames = new HashMap<>();
+    private Instrumentation instrumentation ;
+
+    private Map<String, Set<String>> methodNames = new HashMap<>();
+
+    public StartExecutorHandler(Instrumentation instrumentation) {
+        this.instrumentation = instrumentation;
+    }
 
     @Override
     public NanoHTTPD.Response handle(NanoHTTPD.IHTTPSession session) {
@@ -60,10 +67,11 @@ public class StartExecutorHandler extends JsonResponseHandler {
             if (methodNames.containsKey(targetClassName)) {
                 Set<String> newMethodNames = newClass2MethodNames.get(targetClassName);
                 for (String newMethodName : newMethodNames) {
-                    if (methodNames.get(targetClassName).contains(newMethodName)) {
+                    Set<String> currentMethodNames = methodNames.get(targetClassName);
+                    if (currentMethodNames.contains(newMethodName)) {
                         newClass2MethodNames.get(targetClassName).remove(newMethodName);
                     } else {
-                        methodNames.get(targetClassName).add(newMethodName);
+                        currentMethodNames.add(newMethodName);
                     }
                 }
             } else {
@@ -74,8 +82,8 @@ public class StartExecutorHandler extends JsonResponseHandler {
             return;
         }
         boolean isEmpty = true;
-        for (String name : newClass2MethodNames.keySet()) {
-            if (!newClass2MethodNames.get(name).isEmpty()) {
+        for (String className : newClass2MethodNames.keySet()) {
+            if (!newClass2MethodNames.get(className).isEmpty()) {
                 isEmpty = false;
             }
         }
@@ -83,7 +91,6 @@ public class StartExecutorHandler extends JsonResponseHandler {
             return;
         }
         ClassPool.getDefault().insertClassPath(new ClassClassPath(HotSwapper.class));
-        Instrumentation instrumentation = HotSwapAgentMain.startAgentAndGetInstrumentation();
         ClassFileTransformer classFileTransformer = new ByteTransformer(targetClassNames, newClass2MethodNames);
         TransformerManager.getInstance(instrumentation).addTransformer(classFileTransformer);
         instrumentation.addTransformer(classFileTransformer, true);

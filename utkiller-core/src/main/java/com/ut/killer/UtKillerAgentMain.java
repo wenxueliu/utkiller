@@ -1,6 +1,7 @@
 package com.ut.killer;
 
 import com.sun.tools.attach.VirtualMachine;
+import com.sun.tools.attach.VirtualMachineDescriptor;
 import com.ut.killer.agent.AgentLauncher;
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -8,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import sun.misc.URLClassPath;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;
 import java.net.URL;
@@ -59,31 +61,45 @@ public class UtKillerAgentMain {
     /**
      * 动态创建JavaAgent的jar包让jvm加载从而取得Instrumentation对象
      */
-    public static Instrumentation startAgentAndGetInstrumentation(String pid, String agentArgs) throws Exception {
+    public static Instrumentation startAgentAndGetInstrumentation(String mainClassPath, String agentArgs) throws Exception {
         if (instrumentation != null) {
             return instrumentation;
         }
-
         correctToolsLoadedOrder();
-
         File agentJar = createJavaAgentJarFile();
-
-        VirtualMachine vm = null;
-        try {
-            System.out.println("attach pid:" + pid);
-            vm = VirtualMachine.attach(pid);
-            if (Objects.nonNull(vm)) {
-                System.out.println("loadAgent pid:" + agentJar.getAbsolutePath());
-                vm.loadAgent(agentJar.getAbsolutePath(), agentArgs);
-            }
-        } finally {
-            if (Objects.nonNull(vm)) {
-                vm.detach();
-            }
-        }
+        attachAgent(mainClassPath, agentJar.getAbsolutePath(), null);
         System.out.println("startAgentAndGetInstrumentation end");
         instrumentation = getInstrumentationFromSystemClassLoader();
         return instrumentation;
+    }
+
+    private static void attachAgent(final String mainClassPath,
+                                    final String agentJarPath,
+                                    final String cfg) throws Exception {
+
+        for (VirtualMachineDescriptor descriptor : VirtualMachine.list()) {
+            System.out.println(descriptor.displayName());
+            if (descriptor.displayName().equals(mainClassPath)) {
+                attachPid(descriptor.id(), agentJarPath, cfg);
+            }
+        }
+    }
+
+    private static void attachPid(String targetJvmPid, String agentJarPath, String cfg) throws IOException {
+        VirtualMachine vmObj = null;
+        try {
+            vmObj = VirtualMachine.attach(targetJvmPid);
+            if (vmObj != null) {
+                System.out.println(agentJarPath);
+                vmObj.loadAgent(agentJarPath, cfg);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            if (Objects.nonNull(vmObj)) {
+                vmObj.detach();
+            }
+        }
     }
 
     /**

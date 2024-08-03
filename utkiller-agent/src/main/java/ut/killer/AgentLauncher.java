@@ -17,6 +17,7 @@ public class AgentLauncher {
     private static final String DEFAULT_UTKILLER_HOME
             = new File(AgentLauncher.class.getProtectionDomain().getCodeSource().getLocation().getFile())
             .getParentFile()
+            .getParentFile()
             .getParent();
 
     // 全局持有ClassLoader用于隔离sandbox实现
@@ -24,7 +25,7 @@ public class AgentLauncher {
             = new ConcurrentHashMap<>();
 
     private static String getSandboxSpyJarPath(String home) {
-        return home + File.separatorChar + "lib" + File.separator + "utkiller-spy.jar";
+        return home + File.separatorChar + "utkiller-spy" + File.separator + "target" + File.separator + "utkiller-spy-1.0.0-SNAPSHOT.jar";
     }
 
     /**
@@ -51,7 +52,7 @@ public class AgentLauncher {
     }
 
     private static void install(final Map<String, String> featureMap,
-                                                          final Instrumentation inst) {
+                                final Instrumentation inst) {
         String namespace = featureMap.getOrDefault("namespace", "default");
         int port = Integer.parseInt(featureMap.getOrDefault("port", "8888"));
         try {
@@ -68,8 +69,9 @@ public class AgentLauncher {
                     getSandboxCoreJarPath(home)
             );
 
+            sandboxClassLoader.loadClass("fi.iki.elonen.NanoHTTPD");
             Class<?> httpAgentServer = sandboxClassLoader.loadClass("com.ut.killer.http.HttpAgentServer");
-            httpAgentServer.getMethod("begin", Integer.class).invoke(null, port);
+            httpAgentServer.getMethod("begin", Integer.class, Instrumentation.class).invoke(null, port, inst);
         } catch (Throwable cause) {
             throw new RuntimeException("utkiller attach failed.", cause);
         }
@@ -110,8 +112,8 @@ public class AgentLauncher {
     }
 
     private static boolean isNotBlankString(final String string) {
-        return null != string
-                && string.length() > 0
+        return Objects.nonNull(string)
+                && !string.isEmpty()
                 && !string.matches("^\\s*$");
     }
 
@@ -151,6 +153,6 @@ public class AgentLauncher {
     }
 
     private static String getSandboxCoreJarPath(String home) {
-        return home + File.separatorChar + "lib" + File.separator + "utkiller-core.jar";
+        return home + File.separatorChar + "utkiller-core" + File.separator + "target" + File.separator + "utkiller-core-1.0.0-SNAPSHOT.jar";
     }
 }
