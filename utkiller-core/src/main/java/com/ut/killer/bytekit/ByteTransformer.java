@@ -14,6 +14,7 @@ import com.alibaba.deps.org.objectweb.asm.tree.AbstractInsnNode;
 import com.alibaba.deps.org.objectweb.asm.tree.ClassNode;
 import com.alibaba.deps.org.objectweb.asm.tree.MethodInsnNode;
 import com.alibaba.deps.org.objectweb.asm.tree.MethodNode;
+import com.ut.killer.EnhanceManager;
 import com.ut.killer.command.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -180,7 +181,7 @@ public class ByteTransformer implements ClassFileTransformer {
 
             // dump the class
 //            dumpClassIfNecessary(className, enhanceClassByteArray, affect);
-
+            EnhanceManager.put(className, classfileBuffer.clone());
             return enhanceClassByteArray;
         } catch (Throwable t) {
             logger.warn("transform loader[{}]:class[{}] failed.", inClassLoader, className, t);

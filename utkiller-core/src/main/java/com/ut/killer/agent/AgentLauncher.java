@@ -41,14 +41,12 @@ public class AgentLauncher {
         String namespace = featureMap.getOrDefault("namespace", "default");
         int port = Integer.parseInt(featureMap.getOrDefault("port", "8888"));
         try {
-            String home = getBasePath(featureMap);
+            String basePath = getBasePath(featureMap);
             // 将Spy注入到BootstrapClassLoader
-            inst.appendToBootstrapClassLoaderSearch(new JarFile(new File(
-                    getSpyJarPath(home)
-            )));
-            System.out.println(home);
+            loadSpy(inst, getSpyJarPath(basePath));
+            System.out.println(basePath);
             // 构造自定义的类加载器，尽量减少Sandbox对现有工程的侵蚀
-            final ClassLoader agentClassLoader = loadOrDefineClassLoader(namespace, getCoreJarPath(home));
+            final ClassLoader agentClassLoader = loadOrDefineClassLoader(namespace, getCoreJarPath(basePath));
 
             handler(inst, agentClassLoader, port);
         } catch (Throwable cause) {
@@ -56,6 +54,24 @@ public class AgentLauncher {
         }
     }
 
+    private static void loadSpy(Instrumentation inst, String spyPath) throws Throwable {
+        // 将Spy添加到BootstrapClassLoader
+        ClassLoader parent = ClassLoader.getSystemClassLoader().getParent();
+        Class<?> spyClass = null;
+        if (parent != null) {
+            try {
+                spyClass = parent.loadClass("com.ut.killer.command.SpyAPI");
+            } catch (Throwable e) {
+                // ignore
+            }
+        }
+        if (spyClass == null) {
+            File spyJarFile = new File(spyPath);
+            inst.appendToBootstrapClassLoaderSearch(new JarFile(spyJarFile));
+        } else {
+            throw new IllegalStateException("can not find " + spyPath);
+        }
+    }
 
     public static synchronized ClassLoader loadOrDefineClassLoader(final String namespace,
                                                                    final String coreJar) throws Throwable {
@@ -92,12 +108,12 @@ public class AgentLauncher {
         return OS.contains("win");
     }
 
-    protected static String getCoreJarPath(String home) {
-        return home + File.separatorChar + "utkiller-core" + File.separator + "target" + File.separator + "utkiller-core-1.0.0-SNAPSHOT.jar";
+    protected static String getCoreJarPath(String basePath) {
+        return basePath + File.separatorChar + "utkiller-core" + File.separator + "target" + File.separator + "utkiller-core-1.0.0-SNAPSHOT.jar";
     }
 
-    protected static String getSpyJarPath(String home) {
-        return home + File.separatorChar + "utkiller-spy" + File.separator + "target" + File.separator + "utkiller-spy-1.0.0-SNAPSHOT.jar";
+    protected static String getSpyJarPath(String basePath) {
+        return basePath + File.separatorChar + "utkiller-spy" + File.separator + "target" + File.separator + "utkiller-spy-1.0.0-SNAPSHOT.jar";
     }
 
     protected static void handler(Instrumentation inst, ClassLoader agentClassLoader, int port) throws

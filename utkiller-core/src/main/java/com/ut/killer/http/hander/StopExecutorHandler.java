@@ -1,5 +1,6 @@
 package com.ut.killer.http.hander;
 
+import com.ut.killer.EnhanceManager;
 import com.ut.killer.bytekit.TransformerManager;
 import com.ut.killer.http.request.InstrumentAneExecutorRequest;
 import com.ut.killer.http.request.InstrumentRequest;
@@ -12,6 +13,7 @@ import javassist.util.HotSwapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
 import java.util.Map;
 import java.util.Set;
@@ -48,6 +50,12 @@ public class StopExecutorHandler extends JsonResponseHandler {
         Map<String, Set<String>> newClass2MethodNames = instrumentRequest.toClass2Methods();
         ClassPool.getDefault().insertClassPath(new ClassClassPath(HotSwapper.class));
         TransformerManager.getInstance(instrumentation).destroy();
+        for (String className : targetClassNames) {
+            Class<?> clazz = Class.forName(className.replace('/', '.'));
+            byte[] originalClassBytes = EnhanceManager.get(className);
+            instrumentation.redefineClasses(new ClassDefinition(clazz, originalClassBytes));
+            EnhanceManager.remove(className);
+        }
 //        instrumentation.addTransformer(new ByteTransformer(targetClassNames, newClass2MethodNames), true);
 //        instrumentation.retransformClasses(targetClasses.toArray(new Class[0]));
     }
