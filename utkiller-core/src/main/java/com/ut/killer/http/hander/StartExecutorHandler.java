@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class StartExecutorHandler extends JsonResponseHandler {
     private static final Logger logger = LoggerFactory.getLogger(StartExecutorHandler.class);
 
-    private Instrumentation instrumentation ;
+    private Instrumentation instrumentation;
 
     private Map<String, Set<String>> methodNames = new HashMap<>();
 

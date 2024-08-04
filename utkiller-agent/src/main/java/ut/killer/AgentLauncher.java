@@ -60,7 +60,6 @@ public class AgentLauncher {
             // 将Spy注入到BootstrapClassLoader
             inst.appendToBootstrapClassLoaderSearch(new JarFile(new File(
                     getSandboxSpyJarPath(home)
-                    // SANDBOX_SPY_JAR_PATH
             )));
             System.out.println(home);
             // 构造自定义的类加载器，尽量减少Sandbox对现有工程的侵蚀
@@ -117,7 +116,7 @@ public class AgentLauncher {
                 && !string.matches("^\\s*$");
     }
 
-    private static synchronized ClassLoader loadOrDefineClassLoader(final String namespace,
+    public static synchronized ClassLoader loadOrDefineClassLoader(final String namespace,
                                                                     final String coreJar) throws Throwable {
 
         final SandboxClassLoader classLoader;
@@ -138,7 +137,7 @@ public class AgentLauncher {
     }
 
     private static String getUtKillerHome(final Map<String, String> featureMap) {
-        String home = DEFAULT_UTKILLER_HOME;
+        String home = featureMap.getOrDefault("utkiller_home", DEFAULT_UTKILLER_HOME);;
         if (isWindows()) {
             Matcher m = Pattern.compile("(?i)^[/\\\\]([a-z])[/\\\\]").matcher(home);
             if (m.find()) {

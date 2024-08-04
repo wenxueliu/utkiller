@@ -17,15 +17,13 @@ public class HttpAgentServer extends NanoHTTPD {
 
     private HashMap<String, HttpHandler> url2Handler = new HashMap<>();
 
-
-
     public HttpAgentServer(int port, Instrumentation inst) {
         super(port);
         addHandler("/rest/v1/start", new StartExecutorHandler(inst));
         addHandler("/rest/v1/stop", new StopExecutorHandler(inst));
         addHandler("/rest/v1/exec", new ExecutorHandler());
         addHandler("/rest/v1/tree", new TreeHandler());
-        addHandler("/rest/v1/all", new AllInOneExecutorHandler());
+        addHandler("/rest/v1/all", new AllInOneExecutorHandler(inst));
     }
 
     void addHandler(String url, HttpHandler handler) {
@@ -53,7 +51,6 @@ public class HttpAgentServer extends NanoHTTPD {
     }
 
     public static void begin(Integer port, Instrumentation inst) {
-//        Instrumentation inst = HotSwapAgentMain.startAgentAndGetInstrumentation();
         HttpAgentServer httpServer = new HttpAgentServer(port, inst);
         try {
             httpServer.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);

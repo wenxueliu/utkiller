@@ -1,6 +1,5 @@
 package com.ut.killer.http.hander;
 
-import com.ut.killer.HotSwapAgentMain;
 import com.ut.killer.bytekit.ByteTransformer;
 import com.ut.killer.bytekit.TransformerManager;
 import com.ut.killer.execute.MethodExecutor;
@@ -26,7 +25,13 @@ import java.util.stream.Collectors;
 public class AllInOneExecutorHandler extends JsonResponseHandler {
     private static final Logger logger = LoggerFactory.getLogger(AllInOneExecutorHandler.class);
 
-    Map<String, Set<String>> methodNames = new HashMap<>();
+    private Instrumentation instrumentation;
+
+    private Map<String, Set<String>> methodNames = new HashMap<>();
+
+    public AllInOneExecutorHandler(Instrumentation instrumentation) {
+        this.instrumentation = instrumentation;
+    }
 
     @Override
     public NanoHTTPD.Response handle(NanoHTTPD.IHTTPSession session) {
@@ -127,7 +132,6 @@ public class AllInOneExecutorHandler extends JsonResponseHandler {
             return;
         }
         ClassPool.getDefault().insertClassPath(new ClassClassPath(HotSwapper.class));
-        Instrumentation instrumentation = HotSwapAgentMain.startAgentAndGetInstrumentation();
         ClassFileTransformer classFileTransformer = new ByteTransformer(targetClassNames, newClass2MethodNames);
         TransformerManager.getInstance(instrumentation).addTransformer(classFileTransformer);
         instrumentation.addTransformer(classFileTransformer, true);

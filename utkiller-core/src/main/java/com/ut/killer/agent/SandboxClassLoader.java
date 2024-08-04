@@ -11,7 +11,7 @@ import java.util.Enumeration;
  * 加载Sandbox用的ClassLoader
  * Created by luanjia@taobao.com on 2016/10/26.
  */
-class SandboxClassLoader extends URLClassLoader {
+public class SandboxClassLoader extends URLClassLoader {
 
     private final String toString;
 
