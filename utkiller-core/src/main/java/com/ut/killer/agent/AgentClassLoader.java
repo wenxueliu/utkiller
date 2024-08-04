@@ -8,15 +8,14 @@ import java.net.URLClassLoader;
 import java.util.Enumeration;
 
 /**
- * 加载Sandbox用的ClassLoader
- * Created by luanjia@taobao.com on 2016/10/26.
+ * 加载 Agent 用的ClassLoader
  */
-public class SandboxClassLoader extends URLClassLoader {
+public class AgentClassLoader extends URLClassLoader {
 
     private final String toString;
 
-    SandboxClassLoader(final String namespace,
-                       final String sandboxCoreJarFilePath) throws MalformedURLException {
+    AgentClassLoader(final String namespace,
+                     final String sandboxCoreJarFilePath) throws MalformedURLException {
         super(new URL[]{new URL("file:" + sandboxCoreJarFilePath)});
         this.toString = String.format("SandboxClassLoader[namespace=%s;path=%s;]", namespace, sandboxCoreJarFilePath);
     }
@@ -48,6 +47,10 @@ public class SandboxClassLoader extends URLClassLoader {
             return loadedClass;
         }
 
+        // 优先从parent（SystemClassLoader）里加载系统类，避免抛出ClassNotFoundException
+        if (name != null && (name.startsWith("sun.") || name.startsWith("java."))) {
+            return super.loadClass(name, resolve);
+        }
         try {
             Class<?> aClass = findClass(name);
             if (resolve) {
@@ -68,7 +71,7 @@ public class SandboxClassLoader extends URLClassLoader {
     /**
      * 尽可能关闭ClassLoader
      * <p>
-     * URLClassLoader会打开指定的URL资源，在SANDBOX中则是对应的Jar文件，如果不在shutdown的时候关闭ClassLoader，会导致下次再次加载
+     * URLClassLoader会打开指定的URL资源，在agent中则是对应的Jar文件，如果不在shutdown的时候关闭ClassLoader，会导致下次再次加载
      * 的时候，依然会访问到上次所打开的文件（底层被缓存起来了）
      * <p>
      * 在JDK1.7版本中，URLClassLoader提供了{@code close()}方法来完成这件事；但在JDK1.6版本就要下点手段了；

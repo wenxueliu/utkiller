@@ -104,7 +104,7 @@ public class AgentUtils {
         try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(jar.toPath()), manifest)) {
             writeClassFile(AgentLauncher.class, jos);
             writeClassFile(ArgsUtils.class, jos);
-            writeClassFile(SandboxClassLoader.class, jos);
+            writeClassFile(AgentClassLoader.class, jos);
             writeClassFile(ClassPool.class, jos);
             writeClassFile(CtClass.class, jos);
         }

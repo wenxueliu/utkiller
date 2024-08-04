@@ -2,6 +2,7 @@ package com.ut.killer.agent;
 
 import java.io.File;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,43 +11,25 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class AgentLauncher {
-
     private static final String OS = System.getProperty("os.name").toLowerCase();
 
-    private static final String DEFAULT_UTKILLER_HOME
+    private static final String DEFAULT_UTKILLER_BASE
             = new File(AgentLauncher.class.getProtectionDomain().getCodeSource().getLocation().getFile())
             .getParentFile()
             .getParentFile()
             .getParent();
 
     // 全局持有ClassLoader用于隔离sandbox实现
-    private static final Map<String, SandboxClassLoader> sandboxClassLoaderMap
+    private static final Map<String, AgentClassLoader> namespace2ClassLoader
             = new ConcurrentHashMap<>();
 
-    private static String getSandboxSpyJarPath(String home) {
-        return home + File.separatorChar + "utkiller-spy" + File.separator + "target" + File.separator + "utkiller-spy-1.0.0-SNAPSHOT.jar";
-    }
 
-    /**
-     * 启动加载
-     *
-     * @param featureString 启动参数
-     *                      [namespace,prop]
-     * @param inst          inst
-     */
     public static void premain(String featureString, Instrumentation inst) {
         System.out.println("start premain begin");
         install(ArgsUtils.toMap(featureString), inst);
         System.out.println("start agentmain end");
     }
 
-    /**
-     * 动态加载
-     *
-     * @param featureString 启动参数
-     *                      [namespace,token,ip,port,prop]
-     * @param inst          inst
-     */
     public static void agentmain(String featureString, Instrumentation inst) {
         System.out.println("start agentmain begin");
         install(ArgsUtils.toMap(featureString), inst);
@@ -58,48 +41,44 @@ public class AgentLauncher {
         String namespace = featureMap.getOrDefault("namespace", "default");
         int port = Integer.parseInt(featureMap.getOrDefault("port", "8888"));
         try {
-            String home = getUtKillerHome(featureMap);
+            String home = getBasePath(featureMap);
             // 将Spy注入到BootstrapClassLoader
             inst.appendToBootstrapClassLoaderSearch(new JarFile(new File(
-                    getSandboxSpyJarPath(home)
+                    getSpyJarPath(home)
             )));
             System.out.println(home);
             // 构造自定义的类加载器，尽量减少Sandbox对现有工程的侵蚀
-            final ClassLoader sandboxClassLoader = loadOrDefineClassLoader(
-                    namespace,
-                    getSandboxCoreJarPath(home)
-            );
+            final ClassLoader agentClassLoader = loadOrDefineClassLoader(namespace, getCoreJarPath(home));
 
-            sandboxClassLoader.loadClass("fi.iki.elonen.NanoHTTPD");
-            Class<?> httpAgentServer = sandboxClassLoader.loadClass("com.ut.killer.http.HttpAgentServer");
-            httpAgentServer.getMethod("begin", Integer.class, Instrumentation.class).invoke(null, port, inst);
+            handler(inst, agentClassLoader, port);
         } catch (Throwable cause) {
             throw new RuntimeException("utkiller attach failed.", cause);
         }
     }
 
+
     public static synchronized ClassLoader loadOrDefineClassLoader(final String namespace,
                                                                    final String coreJar) throws Throwable {
 
-        final SandboxClassLoader classLoader;
+        final AgentClassLoader agentClassLoader;
 
         // 如果已经被启动则返回之前启动的ClassLoader
-        if (sandboxClassLoaderMap.containsKey(namespace)
-                && Objects.nonNull(sandboxClassLoaderMap.get(namespace))) {
-            classLoader = sandboxClassLoaderMap.get(namespace);
+        if (namespace2ClassLoader.containsKey(namespace)
+                && Objects.nonNull(namespace2ClassLoader.get(namespace))) {
+            agentClassLoader = namespace2ClassLoader.get(namespace);
         }
 
         // 如果未启动则重新加载
         else {
-            classLoader = new SandboxClassLoader(namespace, coreJar);
-            sandboxClassLoaderMap.put(namespace, classLoader);
+            agentClassLoader = new AgentClassLoader(namespace, coreJar);
+            namespace2ClassLoader.put(namespace, agentClassLoader);
         }
 
-        return classLoader;
+        return agentClassLoader;
     }
 
-    private static String getUtKillerHome(final Map<String, String> featureMap) {
-        String home = featureMap.getOrDefault("utkiller_home", DEFAULT_UTKILLER_HOME);
+    private static String getBasePath(final Map<String, String> featureMap) {
+        String home = featureMap.getOrDefault("utkiller_base", DEFAULT_UTKILLER_BASE);
         if (isWindows()) {
             Matcher m = Pattern.compile("(?i)^[/\\\\]([a-z])[/\\\\]").matcher(home);
             if (m.find()) {
@@ -113,7 +92,18 @@ public class AgentLauncher {
         return OS.contains("win");
     }
 
-    private static String getSandboxCoreJarPath(String home) {
+    protected static String getCoreJarPath(String home) {
         return home + File.separatorChar + "utkiller-core" + File.separator + "target" + File.separator + "utkiller-core-1.0.0-SNAPSHOT.jar";
+    }
+
+    protected static String getSpyJarPath(String home) {
+        return home + File.separatorChar + "utkiller-spy" + File.separator + "target" + File.separator + "utkiller-spy-1.0.0-SNAPSHOT.jar";
+    }
+
+    protected static void handler(Instrumentation inst, ClassLoader agentClassLoader, int port) throws
+            ClassNotFoundException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        agentClassLoader.loadClass("fi.iki.elonen.NanoHTTPD");
+        Class<?> httpAgentServer = agentClassLoader.loadClass("com.ut.killer.http.HttpAgentServer");
+        httpAgentServer.getMethod("begin", Integer.class, Instrumentation.class).invoke(null, port, inst);
     }
 }

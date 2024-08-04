@@ -14,7 +14,6 @@ public class Main {
                     || StringUtils.isBlank(args[1])) {
                 throw new IllegalArgumentException("illegal args");
             }
-            args[1] = "port=8888;utkiller_home=E:\\code\\utkiller";
             AgentUtils.start(args[0], args[1]);
         } catch (Throwable t) {
             t.printStackTrace();
