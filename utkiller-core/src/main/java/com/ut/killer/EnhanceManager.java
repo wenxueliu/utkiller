@@ -1,9 +1,10 @@
 package com.ut.killer;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class EnhanceManager {
-    private static Map<String, byte[]> enhanceClasses;
+    private static Map<String, byte[]> enhanceClasses = new HashMap<>();
 
     public static synchronized void put(String className, byte[] originClassBytes) {
         enhanceClasses.put(className, originClassBytes);

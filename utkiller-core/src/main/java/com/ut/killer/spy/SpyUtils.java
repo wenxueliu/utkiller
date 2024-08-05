@@ -1,6 +1,6 @@
 package com.ut.killer.spy;
 
-import com.ut.killer.command.SpyAPI;
+import ut.killer.SpyAPI;
 
 import java.lang.reflect.Method;
 

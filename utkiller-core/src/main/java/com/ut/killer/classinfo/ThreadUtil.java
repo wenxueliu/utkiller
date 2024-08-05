@@ -1,7 +1,7 @@
 package com.ut.killer.classinfo;
 
 
-import com.ut.killer.command.SpyAPI;
+import ut.killer.SpyAPI;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;

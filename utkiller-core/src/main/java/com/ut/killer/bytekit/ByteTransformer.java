@@ -18,9 +18,9 @@ import com.ut.killer.EnhanceManager;
 import com.ut.killer.command.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ut.killer.SpyAPI;
 
 import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
 import java.util.*;
 
@@ -40,7 +40,8 @@ public class ByteTransformer implements ClassFileTransformer {
 
     private static Set<String> enhanceClasses = new HashSet<>();
 
-    private final AdviceListener listener = new TraceAdviceListener(true);;
+    private final AdviceListener listener = new TraceAdviceListener(true);
+    ;
 
 
     public ByteTransformer(Set<String> targetClassNames, Map<String, Set<String>> methodNames) {
@@ -49,7 +50,8 @@ public class ByteTransformer implements ClassFileTransformer {
     }
 
     @Override
-    public byte[] transform(ClassLoader inClassLoader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+    public byte[] transform(ClassLoader inClassLoader, String className, Class<?> classBeingRedefined,
+                            ProtectionDomain protectionDomain, byte[] classfileBuffer) {
         if (className == null) {
             logger.info("classname is null {} {}", inClassLoader.getClass().getName(), classBeingRedefined.getName());
             return classfileBuffer;

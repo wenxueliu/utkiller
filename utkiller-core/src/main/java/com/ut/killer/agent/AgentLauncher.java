@@ -60,7 +60,7 @@ public class AgentLauncher {
         Class<?> spyClass = null;
         if (parent != null) {
             try {
-                spyClass = parent.loadClass("com.ut.killer.command.SpyAPI");
+                spyClass = parent.loadClass("ut.killer.command.SpyAPI");
             } catch (Throwable e) {
                 // ignore
             }
