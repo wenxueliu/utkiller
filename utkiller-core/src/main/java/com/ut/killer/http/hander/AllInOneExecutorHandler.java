@@ -71,7 +71,7 @@ public class AllInOneExecutorHandler extends JsonResponseHandler {
     }
 
     public Object handle(ExecRequest execRequest) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
-        MethodExecutor executor = new MethodExecutor();
+        MethodExecutor executor = new MethodExecutor(instrumentation);
         return executor.execute(execRequest.getClassName(), execRequest.getMethodName(),
                 execRequest.getMethodSignature(), execRequest.getParameterJsonString(),
                 execRequest.getParameterTypeSignature());

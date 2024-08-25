@@ -1,14 +1,19 @@
 package com.ut.killer.http;
 
+import com.ut.killer.HotSwapAgentMain;
 import com.ut.killer.http.hander.*;
 import com.ut.killer.http.response.ResultData;
 import fi.iki.elonen.NanoHTTPD;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ut.killer.SpyAPI;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.instrument.Instrumentation;
+import java.security.CodeSource;
 import java.util.HashMap;
+import java.util.jar.JarFile;
 
 import static com.ut.killer.http.HttpConstants.JSON_RESPONSE_HEADER;
 
@@ -50,7 +55,11 @@ public class HttpAgentServer extends NanoHTTPD {
                 + "\nqueryString: " + queryString + "\npostData: " + postData));
     }
 
-    public static void begin(Integer port, Instrumentation inst) {
+    public static void begin(Integer port, Instrumentation inst) throws Throwable  {
+        if (inst == null) {
+            inst = HotSwapAgentMain.startAgentAndGetInstrumentation();
+        }
+        initSpy(inst);
         HttpAgentServer httpServer = new HttpAgentServer(port, inst);
         try {
             httpServer.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
@@ -58,5 +67,40 @@ public class HttpAgentServer extends NanoHTTPD {
             throw new RuntimeException(e);
         }
         logger.info("start agent server in {}", port);
+
+        try {
+            SpyAPI.init();
+        } catch (Throwable e) {
+            // ignore
+        }
+    }
+
+    private static void initSpy(Instrumentation instrumentation) throws Throwable {
+        // TODO init SpyImpl ?
+
+        // 将Spy添加到BootstrapClassLoader
+        ClassLoader parent = ClassLoader.getSystemClassLoader().getParent();
+        Class<?> spyClass = null;
+        if (parent != null) {
+            try {
+                spyClass = parent.loadClass("java.arthas.SpyAPI");
+            } catch (Throwable e) {
+                // ignore
+            }
+        }
+        if (spyClass == null) {
+            CodeSource codeSource = HttpAgentServer.class.getProtectionDomain().getCodeSource();
+            if (codeSource != null) {
+                File arthasCoreJarFile = new File(codeSource.getLocation().toURI().getSchemeSpecificPart());
+                File spyJarFile = new File("E:\\code\\utkiller\\", getSandboxSpyJarPath());
+                instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(spyJarFile));
+            } else {
+                throw new IllegalStateException("can not find " + getSandboxSpyJarPath());
+            }
+        }
+    }
+
+    private static String getSandboxSpyJarPath() {
+        return "utkiller-spy" + File.separator + "target" + File.separator + "utkiller-spy-1.0.2-SNAPSHOT.jar";
     }
 }

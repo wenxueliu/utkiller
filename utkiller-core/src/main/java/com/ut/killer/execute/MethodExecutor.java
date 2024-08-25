@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.lang.instrument.Instrumentation;
 import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,6 +38,12 @@ public class MethodExecutor {
 
     ParameterFactory parameterFactory = new ParameterFactory(objenesis, objectMapper, byteBuddyInstance);
 
+    private Instrumentation instrumentation;
+
+    public MethodExecutor(Instrumentation instrumentation) {
+        this.instrumentation = instrumentation;
+    }
+
     public void execute1(String className, String methodName, Object... args) {
         try {
             ClassPool pool = ClassPool.getDefault();
@@ -53,7 +60,6 @@ public class MethodExecutor {
                           List<String> methodParameters, List<String> parameterTypes)
             throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         ClassLoader targetClassLoader1 = Thread.currentThread().getContextClassLoader();
-
         Object objectInstanceByClass = tryObjectConstruct(targetClassName, targetClassLoader1, new HashMap<>());
 
         Class<?> targetClassType = getTargetClassType(targetClassName, targetClassLoader1, objectInstanceByClass);

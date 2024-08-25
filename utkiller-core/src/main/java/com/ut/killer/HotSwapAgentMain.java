@@ -1,63 +1,57 @@
-package com.ut.killer.agent;
+package com.ut.killer;
 
 import com.sun.tools.attach.VirtualMachine;
-import com.sun.tools.attach.VirtualMachineDescriptor;
 import javassist.ClassPool;
 import javassist.CtClass;
 import sun.misc.URLClassPath;
-import ut.killer.AgentLauncher;
 
 import java.io.File;
-import java.io.IOException;
+import java.lang.instrument.Instrumentation;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Vector;
 import java.util.jar.Attributes;
+import java.util.jar.Attributes.Name;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
-public class AgentUtils {
+/**
+ * @author yudong
+ * @date 2022/6/4
+ */
+public class HotSwapAgentMain {
+    private static Instrumentation instrumentation = null;
+
+    public static void agentmain(String agentArgs, Instrumentation inst) {
+        instrumentation = inst;
+    }
+
     /**
      * 动态创建JavaAgent的jar包让jvm加载从而取得Instrumentation对象
      */
-    public static void start(String mainClassPath, String agentArgs) throws Exception {
-        System.out.println("agent attach start");
-//        correctToolsLoadedOrder();
-        File agentJar = AgentUtils.createJavaAgentJarFile();
-        attachAgent(mainClassPath, agentJar.getAbsolutePath(), agentArgs);
-        System.out.println("agent attach end");
-    }
-
-    public static void attachAgent(final String mainClassPath,
-                                    final String agentJarPath,
-                                    final String agentArgs) throws Exception {
-        for (VirtualMachineDescriptor descriptor : VirtualMachine.list()) {
-            System.out.println(descriptor.displayName());
-            if (descriptor.displayName().equals(mainClassPath)) {
-                attachPid(descriptor.id(), agentJarPath, agentArgs);
-            }
+    public static Instrumentation startAgentAndGetInstrumentation() throws Exception {
+        if (instrumentation != null) {
+            return instrumentation;
         }
-    }
 
-    private static void attachPid(String targetJvmPid, String agentJarPath, String agentArgs) throws IOException {
-        VirtualMachine vmObj = null;
-        try {
-            vmObj = VirtualMachine.attach(targetJvmPid);
-            if (vmObj != null) {
-                System.out.println(agentJarPath);
-                vmObj.loadAgent(agentJarPath, agentArgs);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        } finally {
-            if (Objects.nonNull(vmObj)) {
-                vmObj.detach();
-            }
-        }
+        correctToolsLoadedOrder();
+
+        File agentJar = createJavaAgentJarFile();
+
+        String nameOfRunningVm = ManagementFactory.getRuntimeMXBean().getName();
+        String pid = nameOfRunningVm.substring(0, nameOfRunningVm.indexOf(64));
+        VirtualMachine vm = VirtualMachine.attach(pid);
+        vm.loadAgent(agentJar.getAbsolutePath(), null);
+        vm.detach();
+        instrumentation = getInstrumentationFromSystemClassLoader();
+        return instrumentation;
     }
 
     /**
@@ -65,7 +59,7 @@ public class AgentUtils {
      * 对两个tools包的加载顺序根据当前运行环境必要时进行交换,确保系统优先加载的是正确的tools包
      */
     private static void correctToolsLoadedOrder() throws Exception {
-        ClassLoader classLoader = AgentUtils.class.getClassLoader();
+        ClassLoader classLoader = HotSwapAgentMain.class.getClassLoader();
         Field ucp = URLClassLoader.class.getDeclaredField("ucp");
         ucp.setAccessible(true);
         URLClassPath urlClassPath = (URLClassPath) ucp.get(classLoader);
@@ -97,29 +91,43 @@ public class AgentUtils {
         }
     }
 
-    public static File createJavaAgentJarFile() throws Exception {
-        return new File("E:\\code\\utkiller\\utkiller-agent\\target\\utkiller-agent-1.0.2-SNAPSHOT-jar-with-dependencies.jar");
-//        File jar = File.createTempFile("agent", ".jar");
-//        jar.deleteOnExit();
-//        Manifest manifest = buildeManifest();
-//        try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(jar.toPath()), manifest)) {
-//            writeClassFile(AgentLauncher.class, jos);
-//            writeClassFile(ArgsUtils.class, jos);
-//            writeClassFile(AgentClassLoader.class, jos);
-//            writeClassFile(ClassPool.class, jos);
-//            writeClassFile(CtClass.class, jos);
-//        }
-//        return jar;
+    /**
+     * 当调用loadAgent时jvm肯定用的是AppClassLoader类加载器来加载HotSwapAgentMain类,所以直接用反射取得Instrumentation对象
+     */
+    public static Instrumentation getInstrumentationFromSystemClassLoader() throws Exception {
+        ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
+        Field classesField = ClassLoader.class.getDeclaredField("classes");
+        classesField.setAccessible(true);
+        Vector<Class<?>> classes = (Vector<Class<?>>) classesField.get(systemClassLoader);
+
+        Class<?> clz = null;
+        for (Class<?> aClass : classes) {
+            if (aClass.getName().equals(HotSwapAgentMain.class.getName())) {
+                clz = aClass;
+                break;
+            }
+        }
+        Objects.requireNonNull(clz);
+        Field field = clz.getDeclaredField("instrumentation");
+        field.setAccessible(true);
+        return (Instrumentation) field.get(null);
     }
 
-    private static Manifest buildeManifest() {
+    private static File createJavaAgentJarFile() throws Exception {
+        File jar = File.createTempFile("agent", ".jar");
+        jar.deleteOnExit();
         Manifest manifest = new Manifest();
         Attributes attrs = manifest.getMainAttributes();
-        attrs.put(Attributes.Name.MANIFEST_VERSION, "1.0");
-        attrs.put(new Attributes.Name("Agent-Class"), AgentLauncher.class.getName());
-        attrs.put(new Attributes.Name("Can-Retransform-Classes"), "true");
-        attrs.put(new Attributes.Name("Can-Redefine-Classes"), "true");
-        return manifest;
+        attrs.put(Name.MANIFEST_VERSION, "1.0");
+        attrs.put(new Name("Agent-Class"), HotSwapAgentMain.class.getName());
+        attrs.put(new Name("Can-Retransform-Classes"), "true");
+        attrs.put(new Name("Can-Redefine-Classes"), "true");
+        try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(jar.toPath()), manifest)) {
+            writeClassFile(HotSwapAgentMain.class, jos);
+            writeClassFile(ClassPool.class, jos);
+            writeClassFile(CtClass.class, jos);
+        }
+        return jar;
     }
 
     private static void writeClassFile(Class<?> clz, JarOutputStream jos) throws Exception {
