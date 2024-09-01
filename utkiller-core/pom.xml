@@ -279,7 +279,7 @@
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.ut.killer.Main</mainClass>
                                     <manifestEntries>
-                                        <Created-By>core engine team, middleware group, alibaba inc.</Created-By>
+                                        <Created-By>liuwenxue</Created-By>
                                         <Implementation-Version>${project.version}</Implementation-Version>
                                         <Implementation-Vendor-Id>com.ut.killer</Implementation-Vendor-Id>
                                         <Specification-Version>${project.version}</Specification-Version>

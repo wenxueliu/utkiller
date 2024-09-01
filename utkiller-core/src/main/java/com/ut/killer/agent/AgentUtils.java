@@ -37,6 +37,7 @@ public class AgentUtils {
     public static void attachAgent(final String mainClassPath,
                                     final String agentJarPath,
                                     final String agentArgs) throws Exception {
+        System.out.println("agentJarPath：" + agentJarPath);
         for (VirtualMachineDescriptor descriptor : VirtualMachine.list()) {
             System.out.println(descriptor.displayName());
             if (descriptor.displayName().equals(mainClassPath)) {
@@ -100,8 +101,9 @@ public class AgentUtils {
     }
 
     public static File createJavaAgentJarFile(String agentArgs) throws Exception {
-        String utillerHome = ArgsUtils.toMap(agentArgs).getOrDefault("utkiller_home", "");
-        return new File(utillerHome + File.separator + "utkiller-agent.jar");
+        String utkillerHome = ArgsUtils.toMap(agentArgs).getOrDefault("utkiller_home", "");
+        System.out.println("utkiller_home:" + utkillerHome);
+        return new File(utkillerHome + File.separator + "utkiller-agent.jar");
     }
 
     public static File createJavaAgentJarFile2() throws Exception {

@@ -11,6 +11,7 @@
         <module>utkiller-spy</module>
         <module>utkiller-core</module>
         <module>utkiller-agent</module>
+        <module>utkiller-package</module>
     </modules>
 
     <artifactId>ut-killer</artifactId>
