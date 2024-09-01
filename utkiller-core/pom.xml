@@ -157,12 +157,6 @@
             <scope>${jackson.scope}</scope>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>${jackson.version}</version>
-            <scope>${jackson.scope}</scope>
-        </dependency>
-        <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>bytekit-instrument-api</artifactId>
             <version>0.1.2</version>
@@ -231,6 +225,11 @@
             <groupId>com.taobao.arthas</groupId>
             <artifactId>arthas-vmtool</artifactId>
             <version>3.7.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.30</version>
         </dependency>
     </dependencies>
 

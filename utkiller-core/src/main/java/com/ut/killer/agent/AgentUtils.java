@@ -6,12 +6,14 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import sun.misc.URLClassPath;
 import ut.killer.AgentLauncher;
+import ut.killer.ArgsUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Objects;
@@ -26,8 +28,8 @@ public class AgentUtils {
      */
     public static void start(String mainClassPath, String agentArgs) throws Exception {
         System.out.println("agent attach start");
-//        correctToolsLoadedOrder();
-        File agentJar = AgentUtils.createJavaAgentJarFile();
+        correctToolsLoadedOrder();
+        File agentJar = AgentUtils.createJavaAgentJarFile(agentArgs);
         attachAgent(mainClassPath, agentJar.getAbsolutePath(), agentArgs);
         System.out.println("agent attach end");
     }
@@ -97,19 +99,23 @@ public class AgentUtils {
         }
     }
 
-    public static File createJavaAgentJarFile() throws Exception {
-        return new File("E:\\code\\utkiller\\utkiller-agent\\target\\utkiller-agent-1.0.2-SNAPSHOT-jar-with-dependencies.jar");
-//        File jar = File.createTempFile("agent", ".jar");
-//        jar.deleteOnExit();
-//        Manifest manifest = buildeManifest();
-//        try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(jar.toPath()), manifest)) {
-//            writeClassFile(AgentLauncher.class, jos);
-//            writeClassFile(ArgsUtils.class, jos);
+    public static File createJavaAgentJarFile(String agentArgs) throws Exception {
+        String utillerHome = ArgsUtils.toMap(agentArgs).getOrDefault("utkiller_home", "");
+        return new File(utillerHome + File.separator + "utkiller-agent.jar");
+    }
+
+    public static File createJavaAgentJarFile2() throws Exception {
+        File jar = File.createTempFile("agent", ".jar");
+        jar.deleteOnExit();
+        Manifest manifest = buildeManifest();
+        try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(jar.toPath()), manifest)) {
+            writeClassFile(AgentLauncher.class, jos);
+            writeClassFile(ArgsUtils.class, jos);
 //            writeClassFile(AgentClassLoader.class, jos);
-//            writeClassFile(ClassPool.class, jos);
-//            writeClassFile(CtClass.class, jos);
-//        }
-//        return jar;
+            writeClassFile(ClassPool.class, jos);
+            writeClassFile(CtClass.class, jos);
+        }
+        return jar;
     }
 
     private static Manifest buildeManifest() {

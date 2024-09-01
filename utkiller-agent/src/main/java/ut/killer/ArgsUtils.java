@@ -1,4 +1,4 @@
-package com.ut.killer.agent;
+package ut.killer;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

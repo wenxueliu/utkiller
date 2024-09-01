@@ -23,8 +23,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 /**
- * @author yudong
- * @date 2022/6/4
+ * @author liuwenxue
  */
 public class HotSwapAgentMain {
     private static Instrumentation instrumentation = null;
