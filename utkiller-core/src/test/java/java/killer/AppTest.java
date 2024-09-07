@@ -1,4 +1,4 @@
-package ut.killer;
+package java.killer;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

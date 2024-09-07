@@ -12,38 +12,17 @@ set BASEDIR=%~dp0
 if ["%~1"]==[""] (
   echo Example:
   echo   %~nx0 452
-  echo   %~nx0 452 --ignore-tools # for jdk 9/10/11
   echo(
-  echo Need the pid argument, you can run jps to list all java process ids.
+  echo Need the main class argument, you can run jps to list all java process ids.
   goto exit_bat
 )
 
 set AGENT_JAR=%BASEDIR%utkiller-agent.jar
 set CORE_JAR=%BASEDIR%utkiller-core.jar
 
-set PID=123
+set MAIN_CLASS=%~1
 
-echo %PID%| findstr /r "^[1-9][0-9]*$">nul
-
-if %errorlevel% neq 0 (
-  echo PID is not valid number!
-  echo Example:
-  echo   %~nx0 452
-  echo   %~nx0 452 --ignore-tools # for jdk 9/10/11
-  echo(
-  echo Need the pid argument, you can run jps to list all java process ids.
-  goto exit_bat
-)
-
-REM parse extend args
-set ignoreTools=0
-set exitProcess=0
-for %%a in (%*) do (
-  if "%%a"=="--no-interact" set exitProcess=1
-  if "%%a"=="--ignore-tools" set ignoreTools=1
-)
-
-REM from https://stackoverflow.com/a/35445653 
+REM from https://stackoverflow.com/a/35445653
 :read_params
 if not %1/==/ (
     if not "%__var%"=="" (
@@ -64,17 +43,15 @@ echo JAVA_HOME: %JAVA_HOME%
 REM Setup JAVA_HOME
 if "%JAVA_HOME%" == "" goto noJavaHome
 if not exist "%JAVA_HOME%\bin\java.exe" goto noJavaHome
-if %ignoreTools% == 1 (
-  echo Ignore tools.jar, make sure the java version ^>^= 9
-) else (
-  if not exist "%JAVA_HOME%\lib\tools.jar" (
-    echo Can not find lib\tools.jar under %JAVA_HOME%!
-    echo If java version ^<^= 1.8, please make sure JAVA_HOME point to a JDK not a JRE.
-    echo If java version ^>^= 9, try to run as.bat ^<pid^> --ignore-tools
-    goto exit_bat
-  )
-  set BOOT_CLASSPATH="-Xbootclasspath/a:%JAVA_HOME%\lib\tools.jar"
+
+if not exist "%JAVA_HOME%\lib\tools.jar" (
+  echo Can not find lib\tools.jar under %JAVA_HOME%!
+  echo If java version ^<^= 1.8, please make sure JAVA_HOME point to a JDK not a JRE.
+  echo If java version ^>^= 9, try to run as.bat ^<pid^> --ignore-tools
+  goto exit_bat
 )
+set BOOT_CLASSPATH="-Xbootclasspath/a:%JAVA_HOME%\lib\tools.jar"
+
 
 set JAVACMD="%JAVA_HOME%\bin\java.exe"
 echo JAVACMD: %JAVACMD%

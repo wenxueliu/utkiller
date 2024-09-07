@@ -12,12 +12,6 @@ import java.util.regex.Pattern;
 public class AgentLauncher {
     private static final String OS = System.getProperty("os.name").toLowerCase();
 
-    private static final String DEFAULT_UTKILLER_HOME
-            = new File(AgentLauncher.class.getProtectionDomain().getCodeSource().getLocation().getFile())
-            .getParentFile()
-            .getParentFile()
-            .getParent();
-
     // 全局持有ClassLoader用于隔离sandbox实现
     private static final Map<String, ClassLoader> sandboxClassLoaderMap
             = new ConcurrentHashMap<>();
@@ -25,33 +19,33 @@ public class AgentLauncher {
     /**
      * 启动加载
      *
-     * @param featureString 启动参数
+     * @param args 启动参数
      *                      [namespace,prop]
      * @param inst          inst
      */
-    public static void premain(String featureString, Instrumentation inst) {
-        install(ArgsUtils.toMap(featureString), inst);
+    public static void premain(String args, Instrumentation inst) {
+        install(args, inst);
     }
 
     /**
      * 动态加载
      *
-     * @param featureString 启动参数
+     * @param args 启动参数
      *                      [namespace,token,ip,port,prop]
      * @param inst          inst
      */
-    public static void agentmain(String featureString, Instrumentation inst) {
+    public static void agentmain(String args, Instrumentation inst) {
         System.out.println("start agent");
-        install(ArgsUtils.toMap(featureString), inst);
+        install(args, inst);
     }
 
-    private static void install(final Map<String, String> featureMap,
+    private static void install(String args,
                                 final Instrumentation inst) {
+        final Map<String, String> featureMap = ArgsUtils.toMap(args);
         String namespace = featureMap.getOrDefault("namespace", "default");
-        int port = Integer.parseInt(featureMap.getOrDefault("port", "8888"));
-        String utillerHome = featureMap.getOrDefault("utkiller_home", DEFAULT_UTKILLER_HOME);
+        String utkillerHome = featureMap.getOrDefault("utkiller_home", "");
         try {
-            String home = getUtKillerHome(utillerHome);
+            String home = getUtKillerHome(utkillerHome);
             // 将Spy注入到BootstrapClassLoader
 //            inst.appendToBootstrapClassLoaderSearch(new JarFile(new File(
 //                    getSandboxSpyJarPath(home)
@@ -63,7 +57,7 @@ public class AgentLauncher {
             );
             Thread bindingThread = new Thread(() -> {
                 try {
-                    bind(inst, sandboxClassLoader, port);
+                    bind(inst, sandboxClassLoader, args);
                 } catch (Throwable throwable) {
                     throwable.printStackTrace(System.err);
                 }
@@ -76,10 +70,10 @@ public class AgentLauncher {
         }
     }
 
-    private static void bind(Instrumentation inst, ClassLoader sandboxClassLoader, int port) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+    private static void bind(Instrumentation inst, ClassLoader sandboxClassLoader, String featureString) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         sandboxClassLoader.loadClass("fi.iki.elonen.NanoHTTPD");
         Class<?> httpAgentServer = sandboxClassLoader.loadClass("com.ut.killer.http.HttpAgentServer");
-        httpAgentServer.getMethod("begin", Integer.class, Instrumentation.class).invoke(null, port, inst);
+        httpAgentServer.getMethod("begin", String.class, Instrumentation.class).invoke(null, featureString, inst);
     }
 
     private static boolean isBlankString(final String string) {
