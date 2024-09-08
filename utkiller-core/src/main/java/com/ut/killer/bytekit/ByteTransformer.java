@@ -27,7 +27,6 @@ import java.util.*;
 public class ByteTransformer implements ClassFileTransformer {
     private static final Logger logger = LoggerFactory.getLogger(ByteTransformer.class);
 
-    private final static Map<Class<?>/* Class */, Object> classBytesCache = new WeakHashMap<Class<?>, Object>();
     private static SpyImpl spyImpl = new SpyImpl();
 
     static {
@@ -178,11 +177,6 @@ public class ByteTransformer implements ClassFileTransformer {
 
             byte[] enhanceClassByteArray = AsmUtils.toBytes(classNode, inClassLoader, classReader);
 
-            // 增强成功，记录类
-            classBytesCache.put(classBeingRedefined, new Object());
-
-            // dump the class
-//            dumpClassIfNecessary(className, enhanceClassByteArray, affect);
             EnhanceManager.put(className, classfileBuffer.clone());
             return enhanceClassByteArray;
         } catch (Throwable t) {
