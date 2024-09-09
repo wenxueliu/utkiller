@@ -1,5 +1,6 @@
 package com.ut.killer.http.hander;
 
+import com.ut.killer.ClassManager;
 import com.ut.killer.EnhanceManager;
 import com.ut.killer.bytekit.TransformerManager;
 import com.ut.killer.http.request.InstrumentAneExecutorRequest;
@@ -51,10 +52,11 @@ public class StopExecutorHandler extends JsonResponseHandler {
         ClassPool.getDefault().insertClassPath(new ClassClassPath(HotSwapper.class));
         TransformerManager.getInstance(instrumentation).destroy();
         for (String className : targetClassNames) {
-            Class<?> clazz = Class.forName(className.replace('/', '.'));
-            byte[] originalClassBytes = EnhanceManager.get(className);
+            Class<?> clazz = Class.forName(className);
+            byte[] originalClassBytes = EnhanceManager.get(className.replace('.', '/'));
             instrumentation.redefineClasses(new ClassDefinition(clazz, originalClassBytes));
             EnhanceManager.remove(className);
+            ClassManager.removeClass(className);
         }
 //        instrumentation.addTransformer(new ByteTransformer(targetClassNames, newClass2MethodNames), true);
 //        instrumentation.retransformClasses(targetClasses.toArray(new Class[0]));

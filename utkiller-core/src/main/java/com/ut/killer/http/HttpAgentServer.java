@@ -6,26 +6,25 @@ import com.ut.killer.http.response.ResultData;
 import fi.iki.elonen.NanoHTTPD;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ut.killer.ArgsUtils;
 import ut.killer.SpyAPI;
+import ut.killer.UTKillerConfiguration;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.instrument.Instrumentation;
 import java.security.CodeSource;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.jar.JarFile;
 
 import static com.ut.killer.http.HttpConstants.JSON_RESPONSE_HEADER;
 
 public class HttpAgentServer extends NanoHTTPD {
-    private static final Logger logger = LoggerFactory.getLogger(StopExecutorHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(HttpAgentServer.class);
 
     private HashMap<String, HttpHandler> url2Handler = new HashMap<>();
 
-    public HttpAgentServer(int port, Instrumentation inst) {
-        super(port);
+    public HttpAgentServer(UTKillerConfiguration config, Instrumentation inst) {
+        super(config.getPort());
         addHandler("/rest/v1/start", new StartExecutorHandler(inst));
         addHandler("/rest/v1/stop", new StopExecutorHandler(inst));
         addHandler("/rest/v1/exec", new ExecutorHandler());
@@ -57,19 +56,19 @@ public class HttpAgentServer extends NanoHTTPD {
                 + "\nqueryString: " + queryString + "\npostData: " + postData));
     }
 
-    public static void begin(String args, Instrumentation inst) throws Throwable {
-        final Map<String, String> argsMap = ArgsUtils.toMap(args);
-        int port = Integer.parseInt(argsMap.getOrDefault("port", "8888"));
-        String utkillerHome = argsMap.getOrDefault("utkiller_home", "");
+    public static void begin(UTKillerConfiguration config, Instrumentation inst) throws Throwable {
+        int port = config.getPort();
+        String baseDir = config.getBaseDir();
         if (inst == null) {
             inst = HotSwapAgentMain.startAgentAndGetInstrumentation();
         }
-        initSpy(inst, utkillerHome);
-        HttpAgentServer httpServer = new HttpAgentServer(port, inst);
+        initSpy(inst, baseDir);
+        HttpAgentServer httpServer = new HttpAgentServer(config, inst);
         try {
             httpServer.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (IOException ex) {
+            logger.error("http server start error", ex);
+            throw new RuntimeException(ex);
         }
         logger.info("start agent server in {}", port);
         try {
@@ -79,7 +78,7 @@ public class HttpAgentServer extends NanoHTTPD {
         }
     }
 
-    private static void initSpy(Instrumentation instrumentation, String utkillerHome) throws Throwable {
+    private static void initSpy(Instrumentation instrumentation, String baseDir) throws Throwable {
         ClassLoader parent = ClassLoader.getSystemClassLoader().getParent();
         Class<?> spyClass = null;
         if (parent != null) {
@@ -92,7 +91,7 @@ public class HttpAgentServer extends NanoHTTPD {
         if (spyClass == null) {
             CodeSource codeSource = HttpAgentServer.class.getProtectionDomain().getCodeSource();
             if (codeSource != null) {
-                File spyJarFile = new File(getSandboxSpyJarPath(utkillerHome));
+                File spyJarFile = new File(getSandboxSpyJarPath(baseDir));
                 instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(spyJarFile));
             } else {
                 throw new IllegalStateException("can not find utkiller-spy.jar");

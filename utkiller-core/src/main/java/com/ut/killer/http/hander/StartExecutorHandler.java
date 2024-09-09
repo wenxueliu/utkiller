@@ -1,5 +1,6 @@
 package com.ut.killer.http.hander;
 
+import com.ut.killer.ClassManager;
 import com.ut.killer.bytekit.ByteTransformer;
 import com.ut.killer.bytekit.TransformerManager;
 import com.ut.killer.execute.MethodExecutor;
@@ -18,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,8 +27,6 @@ public class StartExecutorHandler extends JsonResponseHandler {
     private static final Logger logger = LoggerFactory.getLogger(StartExecutorHandler.class);
 
     private Instrumentation instrumentation;
-
-    private Map<String, Set<String>> methodNames = new HashMap<>();
 
     public StartExecutorHandler(Instrumentation instrumentation) {
         this.instrumentation = instrumentation;
@@ -64,30 +62,25 @@ public class StartExecutorHandler extends JsonResponseHandler {
         Map<String, Set<String>> newClass2MethodNames = instrumentRequest.toClass2Methods();
 
         for (String targetClassName : newClass2MethodNames.keySet()) {
-            if (methodNames.containsKey(targetClassName)) {
+            if (ClassManager.containsClass(targetClassName)) {
                 Set<String> newMethodNames = newClass2MethodNames.get(targetClassName);
                 for (String newMethodName : newMethodNames) {
-                    Set<String> currentMethodNames = methodNames.get(targetClassName);
+                    Set<String> currentMethodNames = ClassManager.getMethods(targetClassName);
                     if (currentMethodNames.contains(newMethodName)) {
                         newClass2MethodNames.get(targetClassName).remove(newMethodName);
+                        if (newClass2MethodNames.get(targetClassName).isEmpty()) {
+                            newClass2MethodNames.remove(targetClassName);
+                        }
                     } else {
                         currentMethodNames.add(newMethodName);
                     }
                 }
             } else {
-                methodNames.put(targetClassName, newClass2MethodNames.get(targetClassName));
+                ClassManager.putClass(targetClassName, newClass2MethodNames.get(targetClassName));
             }
         }
-        if (newClass2MethodNames.isEmpty() || newClass2MethodNames.values().isEmpty()) {
-            return;
-        }
-        boolean isEmpty = true;
-        for (String className : newClass2MethodNames.keySet()) {
-            if (!newClass2MethodNames.get(className).isEmpty()) {
-                isEmpty = false;
-            }
-        }
-        if (isEmpty) {
+        if (newClass2MethodNames.isEmpty()) {
+            logger.info("all classes {} has been enhanced", targetClassNames);
             return;
         }
         ClassPool.getDefault().insertClassPath(new ClassClassPath(HotSwapper.class));

@@ -35,17 +35,18 @@ public class AgentLauncher {
      * @param inst          inst
      */
     public static void agentmain(String args, Instrumentation inst) {
-        System.out.println("start agent");
         install(args, inst);
     }
 
     private static void install(String args,
                                 final Instrumentation inst) {
-        final Map<String, String> featureMap = ArgsUtils.toMap(args);
-        String namespace = featureMap.getOrDefault("namespace", "default");
-        String utkillerHome = featureMap.getOrDefault("utkiller_home", "");
+        String configPath = ArgsUtils.toMap(args).getOrDefault("configPath", "");
+        UTKillerConfiguration config = YamlUtils.parse(configPath);
+
+        String namespace = config.getNamespace();
+        String baseDir = config.getBaseDir();
         try {
-            String home = getUtKillerHome(utkillerHome);
+            String home = getBaseDir(baseDir);
             // 将Spy注入到BootstrapClassLoader
 //            inst.appendToBootstrapClassLoaderSearch(new JarFile(new File(
 //                    getSandboxSpyJarPath(home)
@@ -57,7 +58,7 @@ public class AgentLauncher {
             );
             Thread bindingThread = new Thread(() -> {
                 try {
-                    bind(inst, sandboxClassLoader, args);
+                    bind(inst, sandboxClassLoader, config);
                 } catch (Throwable throwable) {
                     throwable.printStackTrace(System.err);
                 }
@@ -70,10 +71,10 @@ public class AgentLauncher {
         }
     }
 
-    private static void bind(Instrumentation inst, ClassLoader sandboxClassLoader, String featureString) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+    private static void bind(Instrumentation inst, ClassLoader sandboxClassLoader, UTKillerConfiguration config) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         sandboxClassLoader.loadClass("fi.iki.elonen.NanoHTTPD");
         Class<?> httpAgentServer = sandboxClassLoader.loadClass("com.ut.killer.http.HttpAgentServer");
-        httpAgentServer.getMethod("begin", String.class, Instrumentation.class).invoke(null, featureString, inst);
+        httpAgentServer.getMethod("begin", UTKillerConfiguration.class, Instrumentation.class).invoke(null, config, inst);
     }
 
     private static boolean isBlankString(final String string) {
@@ -108,7 +109,7 @@ public class AgentLauncher {
         return sandboxClassLoaderMap.get(namespace);
     }
 
-    private static String getUtKillerHome(String home) {
+    private static String getBaseDir(String home) {
         if (isWindows()) {
             Matcher m = Pattern.compile("(?i)^[/\\\\]([a-z])[/\\\\]").matcher(home);
             if (m.find()) {

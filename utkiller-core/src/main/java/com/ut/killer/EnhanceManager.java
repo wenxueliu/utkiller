@@ -14,6 +14,10 @@ public class EnhanceManager {
         return enhanceClasses.get(className);
     }
 
+    public static boolean contains(String className) {
+        return enhanceClasses.containsKey(className);
+    }
+
     public static synchronized byte[] remove(String className) {
         return enhanceClasses.remove(className);
     }

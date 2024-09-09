@@ -17,11 +17,14 @@ UT-Killer是一个基于字节码工具，通过自动拦截Java方法，记录�
 
 ### main 方法增加初始化代码
 
-```java
-    HttpAgentServer.init(8888);
-```
+执行 as.bat xxxx 或 as.sh xxxx 附加到某个进程
 
 ## 案例
+
+针对某个被测方法
+1. start: 开始录制某个方法
+2. exec: 多次执行这个方法的各种参数组合
+3. stop: 停止录制该方法
 
 ### 打印类的依赖关系
 
@@ -85,79 +88,6 @@ POST
 ```
 
 ### 启动
-
-URL: http://127.0.0.1:8888/rest/v1/start
-
-#### 方法
-POST 
-
-#### 请求头
-
-```
-"Content-Type": "application/json"
-```
-
-#### 请求体
-
-```json
-{
-  "execRequest": {
-    "className": "com.imagedance.zpai.utils.JsonUtils",
-    "methodName": "toUserInfo",
-    "methodSignature": "(Lcom/imagedance/zpai/model/UserInfo;)Ljava/lang/String;",
-    "parameterJsonString": [
-      "{\"userId\": \"123\",\"userName\": \"John Doe\"}"
-    ],
-    "parameterTypeSignature": [
-      "Lcom/imagedance/zpai/model/UserInfo"
-    ]
-  },
-  "mockRequests": []
-}
-```
-
-#### 应答体
-
-```json
-{
-  "jobId" : 0,
-  "root" : {
-    "children" : [ {
-      "children" : null,
-      "type" : "method",
-      "className" : "com.imagedance.zpai.utils.JsonUtils",
-      "methodName" : "toUserInfo",
-      "lineNumber" : -1,
-      "args" : [ {
-        "type" : "com.imagedance.zpai.model.UserInfo",
-        "name" : "object",
-        "value" : {
-          "userId" : "123",
-          "userName" : "sssssssss",
-          "description" : null,
-          "createTime" : null,
-          "updateTime" : null
-        }
-      } ],
-      "returnInfo" : null,
-      "throwExp" : null,
-      "invoking" : false,
-      "mock" : false,
-      "throw" : null
-    } ],
-    "type" : "thread",
-    "threadName" : "NanoHttpd Request Processor (#7)",
-    "threadId" : 53,
-    "daemon" : true,
-    "priority" : 5,
-    "classloader" : "sun.misc.Launcher$AppClassLoader@18b4aac2"
-  },
-  "nodeCount" : 1,
-  "type" : "trace"
-} 
-```
-
-### Spring MVC 案例
 
 URL: http://127.0.0.1:8888/rest/v1/start
 
@@ -251,6 +181,88 @@ POST
 
 ```
 
+### 执行
+
+URL: http://127.0.0.1:8888/rest/v1/exec
+
+#### 方法
+POST
+
+#### 请求头
+```
+"Content-Type": "application/json"
+```
+
+#### 请求体
+
+```json
+{
+    "className": "com.imagedance.zpai.controller.ImageController",
+    "methodName":"deleteCollectImage",
+    "methodSignature": "(Lcom/imagedance/zpai/model/vo/ImageCollectDeleteVo;)Lcom/imagedance/zpai/model/ResultVo;",
+    "parameterJsonString": [
+      "{\"imageId\": \"123\",\"userId\": \"John Doe\"}"
+    ],
+    "parameterTypeSignature": [
+      "Lcom/imagedance/zpai/model/vo/ImageCollectDeleteVo"
+    ]
+  }
+```
+
+#### 应答
+
+```json
+{
+"code": "0",
+"msg": "success",
+"data": "{\"code\":\"0\",\"message\":\"ok\",\"data\":\"\"}"
+}
+```
+
+### 停止
+
+URL: http://127.0.0.1:8888/rest/v1/stop
+
+#### 方法
+POST
+
+#### 请求头
+```
+"Content-Type": "application/json"
+```
+
+#### 请求体
+
+```json
+{
+  "execRequest" :{
+    "className": "com.imagedance.zpai.controller.ImageController",
+    "methodName":"deleteCollectImage",
+    "methodSignature": "(Lcom/imagedance/zpai/model/vo/ImageCollectDeleteVo;)Lcom/imagedance/zpai/model/ResultVo;",
+    "parameterJsonString": [
+      "{\"imageId\": \"aaaaaa\",\"userId\": \"bbbbbb\"}"
+    ],
+    "parameterTypeSignature": [
+      "Lcom/imagedance/zpai/model/vo/ImageCollectDeleteVo"
+    ]
+  },
+  "mockRequests": [{
+    "className": "com.imagedance.zpai.service.ImageService",
+    "methodName":"deleteCollectImage",
+    "methodSignature": "(Ljava/lang/String;Ljava/lang/String;)V"
+  }]
+}
+```
+
+#### 应答
+
+```json
+{
+    "code": "0",
+    "msg": "success",
+    "data": "ok"
+}
+```
 
 
 ## 感谢

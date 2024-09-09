@@ -33,19 +33,17 @@ public class ByteTransformer implements ClassFileTransformer {
         SpyAPI.setSpy(spyImpl);
     }
 
-    private Map<String, Set<String>> methodNames;
+    private Map<String, Set<String>> class2Methods;
 
     private Set<String> targetClassNames;
-
-    private static Set<String> enhanceClasses = new HashSet<>();
 
     private final AdviceListener listener = new TraceAdviceListener(true);
     ;
 
 
-    public ByteTransformer(Set<String> targetClassNames, Map<String, Set<String>> methodNames) {
+    public ByteTransformer(Set<String> targetClassNames, Map<String, Set<String>> class2Methods) {
         this.targetClassNames = targetClassNames;
-        this.methodNames = methodNames;
+        this.class2Methods = class2Methods;
     }
 
     @Override
@@ -56,14 +54,15 @@ public class ByteTransformer implements ClassFileTransformer {
             return classfileBuffer;
         }
         String classNameByDot = className.replace('/', '.');
+        // 忽略掉不需要增强的类
         if (!targetClassNames.contains(classNameByDot)) {
             return classfileBuffer;
         }
         logger.info("classNameByDot: {}", classNameByDot);
-        if (enhanceClasses.contains(classNameByDot)) {
+        // 避免重复增强
+        if (EnhanceManager.contains(classNameByDot)) {
             return classfileBuffer;
         }
-        enhanceClasses.add(classNameByDot);
         logger.info("enhance {} {}", inClassLoader, classNameByDot);
         try {
             // 检查classloader能否加载到 SpyAPI，如果不能，则放弃增强
@@ -77,7 +76,8 @@ public class ByteTransformer implements ClassFileTransformer {
                 return null;
             }
 
-            //keep origin class reader for bytecode optimizations, avoiding JVM metaspace OOM.
+            // keep origin class reader for bytecode optimizations, avoiding JVM metaspace OOM.
+            // https://github.com/alibaba/arthas/issues/1304
             ClassNode classNode = new ClassNode(Opcodes.ASM9);
             ClassReader classReader = AsmUtils.toClassNode(classfileBuffer, classNode);
             // remove JSR https://github.com/alibaba/arthas/issues/1304
@@ -92,26 +92,26 @@ public class ByteTransformer implements ClassFileTransformer {
             interceptorProcessors.addAll(defaultInterceptorClassParser.parse(SpyInterceptors.SpyInterceptor2.class));
             interceptorProcessors.addAll(defaultInterceptorClassParser.parse(SpyInterceptors.SpyInterceptor3.class));
 
-            List<MethodNode> matchedMethods = new ArrayList<>();
+            List<MethodNode> todoEnhanceMethodNods = new ArrayList<>();
             for (MethodNode methodNode : classNode.methods) {
                 logger.info("methodName: {} {}", methodNode.name, methodNode.signature);
-                if (methodNames.get(classNameByDot).contains(methodNode.name)) {
+                if (class2Methods.get(classNameByDot).contains(methodNode.name)) {
                     logger.info("hit {} {}", classNameByDot, methodNode.name);
-                    matchedMethods.add(methodNode);
+                    todoEnhanceMethodNods.add(methodNode);
                 }
             }
 
             // https://github.com/alibaba/arthas/issues/1690
             if (AsmUtils.isEnhancerByCGLIB(className)) {
-                for (MethodNode methodNode : matchedMethods) {
+                for (MethodNode methodNode : todoEnhanceMethodNods) {
                     if (AsmUtils.isConstructor(methodNode)) {
                         AsmUtils.fixConstructorExceptionTable(methodNode);
                     }
                 }
             }
 
-            logger.info("matchedMethods size {} ", matchedMethods.size());
-            for (MethodNode methodNode : matchedMethods) {
+            logger.info("matchedMethods size {} ", todoEnhanceMethodNods.size());
+            for (MethodNode methodNode : todoEnhanceMethodNods) {
                 if (AsmUtils.isNative(methodNode)) {
                     logger.info("ignore native method: {}",
                             AsmUtils.methodDeclaration(Type.getObjectType(classNode.name), methodNode));
@@ -119,23 +119,7 @@ public class ByteTransformer implements ClassFileTransformer {
                 }
                 // 先查找是否有 atBeforeInvoke 函数，如果有，则说明已经有trace了，则直接不再尝试增强，直接插入 listener
                 if (AsmUtils.containsMethodInsnNode(methodNode, Type.getInternalName(SpyAPI.class), "atBeforeInvoke")) {
-                    logger.info("hasMethod atBeforeInvoke {} {}", classNode.name, methodNode.name);
-                    for (AbstractInsnNode insnNode = methodNode.instructions.getFirst(); insnNode != null; insnNode = insnNode
-                            .getNext()) {
-                        logger.info("iterator {} {} {}", classNode.name, methodNode.name, insnNode.getType());
-                        if (insnNode instanceof MethodInsnNode) {
-                            final MethodInsnNode methodInsnNode = (MethodInsnNode) insnNode;
-                            if (methodInsnNode.owner.startsWith("java/")) {
-                                continue;
-                            }
-                            // 原始类型的box类型相关的都跳过
-                            if (AsmOpUtils.isBoxType(Type.getObjectType(methodInsnNode.owner))) {
-                                continue;
-                            }
-                            AdviceListenerManager.registerTraceAdviceListener(inClassLoader, className,
-                                    methodInsnNode.owner, methodInsnNode.name, methodInsnNode.desc, listener);
-                        }
-                    }
+                    handleMethodWithTrace(inClassLoader, className, methodNode, classNode);
                 } else {
                     logger.info("methodProcessor {} {}", classNode.name, methodNode.name);
                     if (methodNode.instructions.size() == 0) {
@@ -143,25 +127,7 @@ public class ByteTransformer implements ClassFileTransformer {
                         // TODO 找到接口的实现类及实现方法
                         continue;
                     }
-                    MethodProcessor methodProcessor = new MethodProcessor(classNode, methodNode);
-                    for (InterceptorProcessor interceptor : interceptorProcessors) {
-                        try {
-                            List<Location> locations = interceptor.process(methodProcessor);
-                            logger.info("locations {}", locations);
-                            for (Location location : locations) {
-                                if (location instanceof MethodInsnNodeWare) {
-                                    MethodInsnNodeWare methodInsnNodeWare = (MethodInsnNodeWare) location;
-                                    MethodInsnNode methodInsnNode = methodInsnNodeWare.methodInsnNode();
-
-                                    AdviceListenerManager.registerTraceAdviceListener(inClassLoader, className,
-                                            methodInsnNode.owner, methodInsnNode.name, methodInsnNode.desc, listener);
-                                }
-                            }
-
-                        } catch (Throwable e) {
-                            logger.error("enhancer error, class: {}, method: {}, interceptor: {}", classNode.name, methodNode.name, interceptor.getClass().getName(), e);
-                        }
-                    }
+                    handleMethodWithoutTrace(inClassLoader, className, methodNode, classNode, interceptorProcessors);
                 }
 
                 logger.info("methodNode {} {}", methodNode.name, methodNode.desc);
@@ -180,8 +146,50 @@ public class ByteTransformer implements ClassFileTransformer {
             EnhanceManager.put(className, classfileBuffer.clone());
             return enhanceClassByteArray;
         } catch (Throwable t) {
-            logger.warn("transform loader[{}]:class[{}] failed.", inClassLoader, className, t);
+            logger.error("transform loader[{}]:class[{}] failed.", inClassLoader, className, t);
         }
         return null;
+    }
+
+    private void handleMethodWithoutTrace(ClassLoader inClassLoader, String className, MethodNode methodNode, ClassNode classNode, List<InterceptorProcessor> interceptorProcessors) {
+        MethodProcessor methodProcessor = new MethodProcessor(classNode, methodNode);
+        for (InterceptorProcessor interceptor : interceptorProcessors) {
+            try {
+                List<Location> locations = interceptor.process(methodProcessor);
+                logger.info("locations {}", locations);
+                for (Location location : locations) {
+                    if (location instanceof MethodInsnNodeWare) {
+                        MethodInsnNodeWare methodInsnNodeWare = (MethodInsnNodeWare) location;
+                        MethodInsnNode methodInsnNode = methodInsnNodeWare.methodInsnNode();
+
+                        AdviceListenerManager.registerTraceAdviceListener(inClassLoader, className,
+                                methodInsnNode.owner, methodInsnNode.name, methodInsnNode.desc, listener);
+                    }
+                }
+
+            } catch (Throwable e) {
+                logger.error("enhancer error, class: {}, method: {}, interceptor: {}", classNode.name, methodNode.name, interceptor.getClass().getName(), e);
+            }
+        }
+    }
+
+    private void handleMethodWithTrace(ClassLoader inClassLoader, String className, MethodNode methodNode, ClassNode classNode) {
+        logger.info("hasMethod atBeforeInvoke {} {}", classNode.name, methodNode.name);
+        for (AbstractInsnNode insnNode = methodNode.instructions.getFirst(); insnNode != null; insnNode = insnNode
+                .getNext()) {
+            logger.info("iterator {} {} {}", classNode.name, methodNode.name, insnNode.getType());
+            if (insnNode instanceof MethodInsnNode) {
+                final MethodInsnNode methodInsnNode = (MethodInsnNode) insnNode;
+                if (methodInsnNode.owner.startsWith("java/")) {
+                    continue;
+                }
+                // 原始类型的box类型相关的都跳过
+                if (AsmOpUtils.isBoxType(Type.getObjectType(methodInsnNode.owner))) {
+                    continue;
+                }
+                AdviceListenerManager.registerTraceAdviceListener(inClassLoader, className,
+                        methodInsnNode.owner, methodInsnNode.name, methodInsnNode.desc, listener);
+            }
+        }
     }
 }

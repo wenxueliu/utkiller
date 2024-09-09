@@ -11,7 +11,7 @@ set BASEDIR=%~dp0
 
 if ["%~1"]==[""] (
   echo Example:
-  echo   %~nx0 452
+  echo   %~nx0 com.imagedance.zpai.ZpaiApplication
   echo(
   echo Need the main class argument, you can run jps to list all java process ids.
   goto exit_bat
@@ -65,7 +65,7 @@ goto exit_bat
 
 :okJava
 echo "CORE_JAR": %CORE_JAR%
-%JAVACMD% -Dfile.encoding=UTF-8 %BOOT_CLASSPATH% -jar %CORE_JAR% com.imagedance.zpai.ZpaiApplication port=9999;utkiller_home=E:\code\utkiller\bin
+%JAVACMD% -Dfile.encoding=UTF-8 %BOOT_CLASSPATH% -jar %CORE_JAR% %MAIN_CLASS% configPath=E:\\code\\utkiller\bin\utkiller.yaml
 if %ERRORLEVEL% NEQ 0 goto exit_bat
 if %exitProcess%==1 goto exit_bat
 goto attachSuccess

@@ -63,7 +63,7 @@ JAVACMD="$JAVA_HOME/bin/java"
 echo "JAVACMD: $JAVACMD"
 
 echo "CORE_JAR: $CORE_JAR"
-"$JAVACMD" -Dfile.encoding=UTF-8 $BOOT_CLASSPATH -jar "$CORE_JAR" $MAIN_CLASS port=9999;utkiller_home="$BASEDIR"
+"$JAVACMD" -Dfile.encoding=UTF-8 $BOOT_CLASSPATH -jar "$CORE_JAR" $MAIN_CLASS configPath="$BASEDIR"
 
 if [ $? -ne 0 ]; then
   exit $ERROR_CODE

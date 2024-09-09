@@ -4,9 +4,13 @@ import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import javassist.ClassPool;
 import javassist.CtClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sun.misc.URLClassPath;
 import ut.killer.AgentLauncher;
 import ut.killer.ArgsUtils;
+import ut.killer.UTKillerConfiguration;
+import ut.killer.YamlUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,21 +27,26 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 public class AgentUtils {
+    private static final Logger logger = LoggerFactory.getLogger(AgentUtils.class);
+
     /**
      * 动态创建JavaAgent的jar包让jvm加载从而取得Instrumentation对象
      */
     public static void start(String mainClassPath, String agentArgs) throws Exception {
-        System.out.println("agent attach start");
+        logger.info("agent attach start");
         correctToolsLoadedOrder();
-        File agentJar = AgentUtils.createJavaAgentJarFile(agentArgs);
+        String configPath = ArgsUtils.toMap(agentArgs).getOrDefault("configPath", "");
+        UTKillerConfiguration config = YamlUtils.parse(configPath);
+        String baseDir = config.getBaseDir();
+        File agentJar = AgentUtils.createJavaAgentJarFile(baseDir);
         attachAgent(mainClassPath, agentJar.getAbsolutePath(), agentArgs);
-        System.out.println("agent attach end");
+        logger.info("agent attach end");
     }
 
     public static void attachAgent(final String mainClassPath,
                                     final String agentJarPath,
                                     final String agentArgs) throws Exception {
-        System.out.println("agentJarPath：" + agentJarPath);
+        logger.info("agentJarPath：{}", agentJarPath);
         for (VirtualMachineDescriptor descriptor : VirtualMachine.list()) {
             System.out.println(descriptor.displayName());
             if (descriptor.displayName().equals(mainClassPath)) {
@@ -55,7 +64,7 @@ public class AgentUtils {
                 vmObj.loadAgent(agentJarPath, agentArgs);
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            logger.error("attach pid error", ex);
         } finally {
             if (Objects.nonNull(vmObj)) {
                 vmObj.detach();
@@ -100,10 +109,8 @@ public class AgentUtils {
         }
     }
 
-    public static File createJavaAgentJarFile(String agentArgs) throws Exception {
-        String utkillerHome = ArgsUtils.toMap(agentArgs).getOrDefault("utkiller_home", "");
-        System.out.println("utkiller_home:" + utkillerHome);
-        return new File(utkillerHome + File.separator + "utkiller-agent.jar");
+    public static File createJavaAgentJarFile(String baseDir) throws Exception {
+        return new File(baseDir + File.separator + "utkiller-agent.jar");
     }
 
     public static File createJavaAgentJarFile2() throws Exception {
@@ -113,7 +120,6 @@ public class AgentUtils {
         try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(jar.toPath()), manifest)) {
             writeClassFile(AgentLauncher.class, jos);
             writeClassFile(ArgsUtils.class, jos);
-//            writeClassFile(AgentClassLoader.class, jos);
             writeClassFile(ClassPool.class, jos);
             writeClassFile(CtClass.class, jos);
         }
