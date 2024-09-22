@@ -7,14 +7,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-/**
- * 
- * 主要用于 tt 命令重放使用
- * 
- * @author vlinux on 15/5/24
- * @author hengyunabc 2020-05-20
- *
- */
 public class ArthasMethod {
     private final Class<?> clazz;
     private final String methodName;

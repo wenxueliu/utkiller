@@ -7,10 +7,7 @@ import javassist.CtClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.URLClassPath;
-import ut.killer.AgentLauncher;
-import ut.killer.ArgsUtils;
-import ut.killer.UTKillerConfiguration;
-import ut.killer.YamlUtils;
+import ut.killer.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,17 +35,16 @@ public class AgentUtils {
         String configPath = ArgsUtils.toMap(agentArgs).getOrDefault("configPath", "");
         UTKillerConfiguration config = YamlUtils.parse(configPath);
         String baseDir = config.getBaseDir();
-        File agentJar = AgentUtils.createJavaAgentJarFile(baseDir);
+//        File agentJar = AgentUtils.loadJavaAgentJarFile(baseDir);
+        File agentJar = createJavaAgentJarFile();
         attachAgent(mainClassPath, agentJar.getAbsolutePath(), agentArgs);
         logger.info("agent attach end");
     }
 
-    public static void attachAgent(final String mainClassPath,
-                                    final String agentJarPath,
-                                    final String agentArgs) throws Exception {
+    public static void attachAgent(String mainClassPath, String agentJarPath, String agentArgs) throws Exception {
         logger.info("agentJarPath：{}", agentJarPath);
         for (VirtualMachineDescriptor descriptor : VirtualMachine.list()) {
-            System.out.println(descriptor.displayName());
+            logger.info("descriptorName={}", descriptor.displayName());
             if (descriptor.displayName().equals(mainClassPath)) {
                 attachPid(descriptor.id(), agentJarPath, agentArgs);
             }
@@ -81,27 +77,27 @@ public class AgentUtils {
         Field ucp = URLClassLoader.class.getDeclaredField("ucp");
         ucp.setAccessible(true);
         URLClassPath urlClassPath = (URLClassPath) ucp.get(classLoader);
+
         Field pathField = urlClassPath.getClass().getDeclaredField("path");
-        Field loadersField = urlClassPath.getClass().getDeclaredField("loaders");
         pathField.setAccessible(true);
-        loadersField.setAccessible(true);
         ArrayList<URL> urls = (ArrayList<URL>) pathField.get(urlClassPath);
+
+        Field loadersField = urlClassPath.getClass().getDeclaredField("loaders");
+        loadersField.setAccessible(true);
+
         ArrayList<Object> loaders = (ArrayList<Object>) loadersField.get(urlClassPath);
-        int windowsToolsJarIndex = Integer.MAX_VALUE;
-        int linuxToolsJarIndex = Integer.MAX_VALUE;
-        for (int i = 0; i < urls.size(); i++) {
-            if (urls.get(i).getPath().endsWith("tools.jar")) {
-                windowsToolsJarIndex = i;
-            } else if (urls.get(i).getPath().endsWith("tools-linux-1.8.0.jar")) {
-                linuxToolsJarIndex = i;
-            }
-        }
-        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+
+        int windowsToolsJarIndex = getToolsJarIndex(urls, "tools.jar");
+        int linuxToolsJarIndex = getToolsJarIndex(urls, "tools-linux-1.8.0.jar");
+
+        String osNameLowerCase = System.getProperty("os.name").toLowerCase();
+        if (osNameLowerCase.contains("windows")) {
             if (linuxToolsJarIndex < windowsToolsJarIndex) {
                 Collections.swap(urls, linuxToolsJarIndex, windowsToolsJarIndex);
                 Collections.swap(loaders, linuxToolsJarIndex, windowsToolsJarIndex);
             }
-        } else if (System.getProperty("os.name").toLowerCase().contains("linux")) {
+        }
+        if (osNameLowerCase.contains("linux")) {
             if (windowsToolsJarIndex < linuxToolsJarIndex) {
                 Collections.swap(urls, linuxToolsJarIndex, windowsToolsJarIndex);
                 Collections.swap(loaders, linuxToolsJarIndex, windowsToolsJarIndex);
@@ -109,17 +105,37 @@ public class AgentUtils {
         }
     }
 
-    public static File createJavaAgentJarFile(String baseDir) throws Exception {
+    private static int getToolsJarIndex(ArrayList<URL> urls, String suffix) {
+        int linuxToolsJarIndex = Integer.MAX_VALUE;
+        for (int index = 0; index < urls.size(); index++) {
+            if (urls.get(index).getPath().endsWith(suffix)) {
+                linuxToolsJarIndex = index;
+            }
+        }
+        return linuxToolsJarIndex;
+    }
+
+    public static File loadJavaAgentJarFile(String baseDir) {
         return new File(baseDir + File.separator + "utkiller-agent.jar");
     }
 
-    public static File createJavaAgentJarFile2() throws Exception {
+    /**
+     * 创建并返回一个 Java agent JAR 文件的 {@code File} 对象。
+     * 该方法处理与创建 JAR 文件相关的所有步骤，并确保任何遇到的异常都被适当地处理和传播。
+     *
+     * @return 包含 Java agent 的 JAR 文件的 {@code File} 对象。
+     * @throws Exception 如果创建 JAR 文件过程中出现任何错误，则抛出此异常。
+     */
+    public static File createJavaAgentJarFile() throws Exception {
         File jar = File.createTempFile("agent", ".jar");
         jar.deleteOnExit();
         Manifest manifest = buildeManifest();
         try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(jar.toPath()), manifest)) {
             writeClassFile(AgentLauncher.class, jos);
             writeClassFile(ArgsUtils.class, jos);
+            writeClassFile(ClassLoaderManager.class, jos);
+            writeClassFile(UTKillerConfiguration.class, jos);
+            writeClassFile(YamlUtils.class, jos);
             writeClassFile(ClassPool.class, jos);
             writeClassFile(CtClass.class, jos);
         }

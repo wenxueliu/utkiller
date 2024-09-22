@@ -1,9 +1,5 @@
 package com.ut.killer.classinfo;
 
-/**
- * Data model of TraceCommand
- * @author gongdewei 2020/4/29
- */
 public class TraceModel extends ResultModel {
     private TraceNode root;
     private int nodeCount;

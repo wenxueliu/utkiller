@@ -1,9 +1,5 @@
 package com.ut.killer.classinfo;
 
-/**
- * 用于在ThreadLocal中传递的实体
- * @author ralf0131 2017-01-05 14:05.
- */
 public class TraceEntity {
 
     public TraceTree tree;

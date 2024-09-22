@@ -2,11 +2,6 @@ package com.ut.killer.classinfo;
 
 import java.util.List;
 
-/**
- * Method call node of TraceCommand
- *
- * @author gongdewei 2020/4/29
- */
 public class MethodNode extends TraceNode {
     private String className;
     private String methodName;

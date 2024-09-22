@@ -1,9 +1,5 @@
 package com.ut.killer.classinfo;
 
-/**
- * Throw exception info node of TraceCommand
- * @author gongdewei 2020/7/21
- */
 public class ThrowNode extends TraceNode {
     private String exception;
     private String message;

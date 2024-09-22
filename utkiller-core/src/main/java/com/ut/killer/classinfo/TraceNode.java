@@ -3,17 +3,10 @@ package com.ut.killer.classinfo;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Abstract Node of TraceCommand
- * @author gongdewei 2020/4/28
- */
 public abstract class TraceNode {
     protected TraceNode parent;
     protected List<TraceNode> children;
 
-    /**
-     * node type: method,
-     */
     private String type;
 
     public TraceNode(String type) {

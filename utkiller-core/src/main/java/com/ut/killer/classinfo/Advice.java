@@ -2,11 +2,7 @@ package com.ut.killer.classinfo;
 
 import java.util.List;
 
-/**
- * 通知点 Created by vlinux on 15/5/20.
- */
 public class Advice {
-
     private final ClassLoader loader;
     private final Class<?> clazz;
     private final ArthasMethod method;
@@ -59,18 +55,6 @@ public class Advice {
         return params;
     }
 
-    /**
-     * for finish
-     *
-     * @param loader    类加载器
-     * @param clazz     类
-     * @param method    方法
-     * @param target    目标类
-     * @param params    调用参数
-     * @param returnObj 返回值
-     * @param throwExp  抛出异常
-     * @param access    进入场景
-     */
     private Advice(
             ClassLoader loader,
             Class<?> clazz,

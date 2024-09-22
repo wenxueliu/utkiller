@@ -15,6 +15,9 @@ import com.alibaba.deps.org.objectweb.asm.tree.ClassNode;
 import com.alibaba.deps.org.objectweb.asm.tree.MethodInsnNode;
 import com.alibaba.deps.org.objectweb.asm.tree.MethodNode;
 import com.ut.killer.EnhanceManager;
+import com.ut.killer.Interceptor.AtEnterInterceptor;
+import com.ut.killer.Interceptor.AtExceptionInterceptor;
+import com.ut.killer.Interceptor.AtExitInterceptor;
 import com.ut.killer.command.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,77 +69,21 @@ public class ByteTransformer implements ClassFileTransformer {
         logger.info("enhance {} {}", inClassLoader, classNameByDot);
         try {
             // 检查classloader能否加载到 SpyAPI，如果不能，则放弃增强
-            try {
-                if (inClassLoader != null) {
-                    inClassLoader.loadClass(SpyAPI.class.getName());
-                }
-            } catch (Throwable e) {
-                logger.error("the classloader can not load SpyAPI, ignore it. classloader: {}, className: {}",
-                        inClassLoader.getClass().getName(), className, e);
+            if (!isSypApiLoaded(inClassLoader)) {
                 return null;
             }
 
-            // keep origin class reader for bytecode optimizations, avoiding JVM metaspace OOM.
-            // https://github.com/alibaba/arthas/issues/1304
             ClassNode classNode = new ClassNode(Opcodes.ASM9);
             ClassReader classReader = AsmUtils.toClassNode(classfileBuffer, classNode);
-            // remove JSR https://github.com/alibaba/arthas/issues/1304
             classNode = AsmUtils.removeJSRInstructions(classNode);
 
-            // 生成增强字节码
-            DefaultInterceptorClassParser defaultInterceptorClassParser = new DefaultInterceptorClassParser();
+            List<MethodNode> todoEnhanceMethodNods = getEnhanceMethodNods(classNode, classNameByDot);
 
-            final List<InterceptorProcessor> interceptorProcessors = new ArrayList<>();
-
-            interceptorProcessors.addAll(defaultInterceptorClassParser.parse(SpyInterceptors.SpyInterceptor1.class));
-            interceptorProcessors.addAll(defaultInterceptorClassParser.parse(SpyInterceptors.SpyInterceptor2.class));
-            interceptorProcessors.addAll(defaultInterceptorClassParser.parse(SpyInterceptors.SpyInterceptor3.class));
-
-            List<MethodNode> todoEnhanceMethodNods = new ArrayList<>();
-            for (MethodNode methodNode : classNode.methods) {
-                logger.info("methodName: {} {}", methodNode.name, methodNode.signature);
-                if (class2Methods.get(classNameByDot).contains(methodNode.name)) {
-                    logger.info("hit {} {}", classNameByDot, methodNode.name);
-                    todoEnhanceMethodNods.add(methodNode);
-                }
-            }
-
-            // https://github.com/alibaba/arthas/issues/1690
-            if (AsmUtils.isEnhancerByCGLIB(className)) {
-                for (MethodNode methodNode : todoEnhanceMethodNods) {
-                    if (AsmUtils.isConstructor(methodNode)) {
-                        AsmUtils.fixConstructorExceptionTable(methodNode);
-                    }
-                }
-            }
+            fixConstructorExceptionTable(className, todoEnhanceMethodNods);
 
             logger.info("matchedMethods size {} ", todoEnhanceMethodNods.size());
-            for (MethodNode methodNode : todoEnhanceMethodNods) {
-                if (AsmUtils.isNative(methodNode)) {
-                    logger.info("ignore native method: {}",
-                            AsmUtils.methodDeclaration(Type.getObjectType(classNode.name), methodNode));
-                    continue;
-                }
-                // 先查找是否有 atBeforeInvoke 函数，如果有，则说明已经有trace了，则直接不再尝试增强，直接插入 listener
-                if (AsmUtils.containsMethodInsnNode(methodNode, Type.getInternalName(SpyAPI.class), "atBeforeInvoke")) {
-                    handleMethodWithTrace(inClassLoader, className, methodNode, classNode);
-                } else {
-                    logger.info("methodProcessor {} {}", classNode.name, methodNode.name);
-                    if (methodNode.instructions.size() == 0) {
-                        logger.info("{} {} is interface", classNode.name, methodNode.name);
-                        // TODO 找到接口的实现类及实现方法
-                        continue;
-                    }
-                    handleMethodWithoutTrace(inClassLoader, className, methodNode, classNode, interceptorProcessors);
-                }
+            processEnhancedMethods(inClassLoader, className, todoEnhanceMethodNods, classNode);
 
-                logger.info("methodNode {} {}", methodNode.name, methodNode.desc);
-                // enter/exist 总是要插入 listener
-                AdviceListenerManager.registerAdviceListener(inClassLoader, className, methodNode.name, methodNode.desc,
-                        listener);
-            }
-
-            // https://github.com/alibaba/arthas/issues/1223 , V1_5 的major version是49
             if (AsmUtils.getMajorVersion(classNode.version) < 49) {
                 classNode.version = AsmUtils.setMajorVersion(classNode.version, 49);
             }
@@ -151,6 +98,81 @@ public class ByteTransformer implements ClassFileTransformer {
         return null;
     }
 
+    private void processEnhancedMethods(ClassLoader inClassLoader, String className,
+                                        List<MethodNode> todoEnhanceMethodNods, ClassNode classNode) {
+        // 生成增强字节码
+        List<InterceptorProcessor> interceptorProcessors = initInterceptorProcessors();
+
+        for (MethodNode methodNode : todoEnhanceMethodNods) {
+            if (AsmUtils.isNative(methodNode)) {
+                logger.info("ignore native method: {}",
+                        AsmUtils.methodDeclaration(Type.getObjectType(classNode.name), methodNode));
+                continue;
+            }
+            if (AsmUtils.containsMethodInsnNode(methodNode, Type.getInternalName(SpyAPI.class), "atBeforeInvoke")) {
+                handleMethodWithTrace(inClassLoader, className, methodNode, classNode);
+            } else {
+                logger.info("methodProcessor {} {}", classNode.name, methodNode.name);
+                if (methodNode.instructions.size() == 0) {
+                    logger.info("{} {} is interface", classNode.name, methodNode.name);
+                    continue;
+                }
+                handleMethodWithoutTrace(inClassLoader, className, methodNode, classNode, interceptorProcessors);
+            }
+
+            logger.info("methodNode {} {}", methodNode.name, methodNode.desc);
+            AdviceListenerManager.registerAdviceListener(inClassLoader, className, methodNode.name, methodNode.desc,
+                    listener);
+        }
+    }
+
+    private boolean isSypApiLoaded(ClassLoader inClassLoader) {
+        if (Objects.isNull(inClassLoader)) {
+            return true;
+        }
+
+        try {
+            inClassLoader.loadClass(SpyAPI.class.getName());
+        } catch (ClassNotFoundException e) {
+            logger.error("the classloader can not load SpyAPI, ignore it. classloader: {}, className: {}",
+                    inClassLoader.getClass().getName(), SpyAPI.class.getName(), e);
+            return false;
+        }
+
+        return true;
+    }
+
+    private static List<InterceptorProcessor> initInterceptorProcessors() {
+        DefaultInterceptorClassParser defaultInterceptorClassParser = new DefaultInterceptorClassParser();
+        List<InterceptorProcessor> interceptorProcessors = new ArrayList<>();
+        interceptorProcessors.addAll(defaultInterceptorClassParser.parse(AtEnterInterceptor.class));
+        interceptorProcessors.addAll(defaultInterceptorClassParser.parse(AtExitInterceptor.class));
+        interceptorProcessors.addAll(defaultInterceptorClassParser.parse(AtExceptionInterceptor.class));
+        return interceptorProcessors;
+    }
+
+    private static void fixConstructorExceptionTable(String className, List<MethodNode> todoEnhanceMethodNods) {
+        if (AsmUtils.isEnhancerByCGLIB(className)) {
+            for (MethodNode methodNode : todoEnhanceMethodNods) {
+                if (AsmUtils.isConstructor(methodNode)) {
+                    AsmUtils.fixConstructorExceptionTable(methodNode);
+                }
+            }
+        }
+    }
+
+    private List<MethodNode> getEnhanceMethodNods(ClassNode classNode, String classNameByDot) {
+        List<MethodNode> todoEnhanceMethodNods = new ArrayList<>();
+        for (MethodNode methodNode : classNode.methods) {
+            logger.info("methodName: {} {}", methodNode.name, methodNode.signature);
+            if (class2Methods.get(classNameByDot).contains(methodNode.name)) {
+                logger.info("hit {} {}", classNameByDot, methodNode.name);
+                todoEnhanceMethodNods.add(methodNode);
+            }
+        }
+        return todoEnhanceMethodNods;
+    }
+
     private void handleMethodWithoutTrace(ClassLoader inClassLoader, String className, MethodNode methodNode, ClassNode classNode, List<InterceptorProcessor> interceptorProcessors) {
         MethodProcessor methodProcessor = new MethodProcessor(classNode, methodNode);
         for (InterceptorProcessor interceptor : interceptorProcessors) {
@@ -161,12 +183,10 @@ public class ByteTransformer implements ClassFileTransformer {
                     if (location instanceof MethodInsnNodeWare) {
                         MethodInsnNodeWare methodInsnNodeWare = (MethodInsnNodeWare) location;
                         MethodInsnNode methodInsnNode = methodInsnNodeWare.methodInsnNode();
-
                         AdviceListenerManager.registerTraceAdviceListener(inClassLoader, className,
                                 methodInsnNode.owner, methodInsnNode.name, methodInsnNode.desc, listener);
                     }
                 }
-
             } catch (Throwable e) {
                 logger.error("enhancer error, class: {}, method: {}, interceptor: {}", classNode.name, methodNode.name, interceptor.getClass().getName(), e);
             }

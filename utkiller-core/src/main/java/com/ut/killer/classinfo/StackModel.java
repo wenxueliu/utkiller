@@ -2,12 +2,7 @@ package com.ut.killer.classinfo;
 
 import java.time.LocalDateTime;
 
-/**
- * StackCommand result model
- * @author gongdewei 2020/4/13
- */
 public class StackModel extends ResultModel {
-
     private LocalDateTime ts;
     private double cost;
     private String traceId;

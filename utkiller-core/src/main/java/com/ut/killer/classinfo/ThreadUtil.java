@@ -8,11 +8,6 @@ import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 
- * @author hengyunabc 2015年12月7日 下午2:29:28
- *
- */
 abstract public class ThreadUtil {
     private static ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 
@@ -28,9 +23,6 @@ abstract public class ThreadUtil {
         return group;
     }
 
-    /**
-     * 获取所有线程
-     */
     public static List<ThreadVO> getThreads() {
         ThreadGroup root = getRoot();
         Thread[] threads = new Thread[root.activeCount()];
@@ -60,11 +52,6 @@ abstract public class ThreadUtil {
         return threadVO;
     }
 
-    /**
-     * 获取所有线程List
-     * 
-     * @return
-     */
     public static List<Thread> getThreadList() {
         List<Thread> result = new ArrayList<Thread>();
         ThreadGroup root = getRoot();
@@ -80,18 +67,6 @@ abstract public class ThreadUtil {
         return result;
     }
 
-    /**
-     * </pre>
-     * java.lang.Thread.getStackTrace(Thread.java:1559),
-     * com.taobao.arthas.core.util.ThreadUtil.getThreadStack(ThreadUtil.java:349),
-     * com.taobao.arthas.core.command.monitor200.StackAdviceListener.before(StackAdviceListener.java:33),
-     * com.taobao.arthas.core.advisor.AdviceListenerAdapter.before(AdviceListenerAdapter.java:49),
-     * com.taobao.arthas.core.advisor.SpyImpl.atEnter(SpyImpl.java:42),
-     * java.arthas.SpyAPI.atEnter(SpyAPI.java:40),
-     * demo.MathGame.print(MathGame.java), demo.MathGame.run(MathGame.java:25),
-     * demo.MathGame.main(MathGame.java:16)
-     * </pre>
-     */
     private static int MAGIC_STACK_DEPTH = 0;
 
     private static int findTheSpyAPIDepth(StackTraceElement[] stackTraceElementArray) {
@@ -110,11 +85,6 @@ abstract public class ThreadUtil {
         return MAGIC_STACK_DEPTH;
     }
 
-    /**
-     * 获取方法执行堆栈信息
-     *
-     * @return 方法堆栈信息
-     */
     public static StackModel getThreadStackModel(ClassLoader loader, Thread currentThread) {
         StackModel stackModel = new StackModel();
         stackModel.setThreadName(currentThread.getName());

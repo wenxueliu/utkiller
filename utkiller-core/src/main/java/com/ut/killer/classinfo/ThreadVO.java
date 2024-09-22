@@ -2,11 +2,6 @@ package com.ut.killer.classinfo;
 
 import java.lang.Thread.State;
 
-/**
- * Thread VO of 'dashboard' and 'thread' command
- *
- * @author gongdewei 2020/4/22
- */
 public class ThreadVO {
     private long id;
     private String name;

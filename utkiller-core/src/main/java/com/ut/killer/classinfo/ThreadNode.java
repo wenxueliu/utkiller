@@ -1,9 +1,5 @@
 package com.ut.killer.classinfo;
 
-/**
- * Thread root node of TraceCommand
- * @author gongdewei 2020/4/29
- */
 public class ThreadNode extends TraceNode {
     private String threadName;
     private long threadId;

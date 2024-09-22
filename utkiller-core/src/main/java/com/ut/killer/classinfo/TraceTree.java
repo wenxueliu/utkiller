@@ -7,11 +7,6 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Tree model of TraceCommand
- *
- * @author gongdewei 2020/4/28
- */
 public class TraceTree {
     private static final Logger logger = LoggerFactory.getLogger(TraceTree.class);
 
@@ -25,14 +20,6 @@ public class TraceTree {
         this.current = root;
     }
 
-    /**
-     * 开始一个新的跟踪节点。
-     * 当进入一个新的方法或行时调用此方法，用于记录代码执行的路径。
-     *
-     * @param advice 包含当前执行方法信息的Advice对象，用于获取类名和方法名。
-     * @param lineNumber 当前执行的代码行号。
-     * @param isInvoking 表示当前方法是否是被调用的状态。
-     */
     public void begin(Advice advice, int lineNumber, boolean isInvoking) {
         String className = advice.getClazz().getName();
         String methodName = advice.getMethod().getName();
@@ -143,18 +130,10 @@ public class TraceTree {
         this.end(advice, -1);
     }
 
-    /**
-     * 修整树结点
-     */
     public void trim() {
         this.normalizeClassName(root);
     }
 
-    /**
-     * 转换标准类名，放在trace结束后统一转换，减少重复操作
-     *
-     * @param node
-     */
     private void normalizeClassName(TraceNode node) {
         if (node instanceof MethodNode) {
             MethodNode methodNode = (MethodNode) node;
