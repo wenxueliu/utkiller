@@ -10,8 +10,8 @@ UT-Killer是一个基于字节码工具，通过自动拦截Java方法，记录�
 ```xml
 <dependency>
     <groupId>ut.killer</groupId>
-    <artifactId>ut-killer</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <artifactId>utkiller-core</artifactId>
+    <version>1.0.2-SNAPSHOT</version>
 </dependency>
 ```
 
