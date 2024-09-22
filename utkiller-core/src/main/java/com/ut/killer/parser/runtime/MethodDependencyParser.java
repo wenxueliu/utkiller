@@ -54,16 +54,22 @@ public class MethodDependencyParser {
         return parseClassDependencies(className, method -> true);
     }
 
-    public ClassDependency parseClassDependencies(String className, String methodName, String methodSignature) throws NotFoundException {
+    public ClassDependency parseClassDependencies(String className, String methodName, String methodSignature) {
         return parseClassDependencies(className, method -> method.getName().equals(methodName) && method.getSignature().equals(methodSignature));
     }
 
-    public ClassDependency parseClassDependencies(String className, String methodName) throws NotFoundException {
+    public ClassDependency parseClassDependencies(String className, String methodName) {
         return parseClassDependencies(className, method -> method.getName().equals(methodName));
     }
 
-    private ClassDependency parseClassDependencies(String className, Predicate<CtMethod> methodMatcher) throws NotFoundException {
-        CtClass ctClass = pool.get(className);
+    private ClassDependency parseClassDependencies(String className, Predicate<CtMethod> methodMatcher) {
+        CtClass ctClass;
+        try {
+            ctClass = pool.get(className);
+        } catch (NotFoundException ex) {
+            logger.error("ClassPool get {} error", className, ex);
+            throw new RuntimeException(ex);
+        }
         ClassDependency classDependency = new ClassDependency();
         classDependency.setClassName(ctClass.getName());
         classDependency.addMethodDependencies(parseMethodDependencies(ctClass, methodMatcher));

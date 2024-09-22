@@ -1,48 +1,32 @@
 package com.ut.killer;
 
 import com.ut.killer.agent.AgentUtils;
-import com.ut.killer.spy.SpyUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Objects;
-
+/**
+ * Main 类作为应用程序的主要入口点
+ */
 public class Main {
-    private Thread shutdown;
+    private static final Logger logger = LoggerFactory.getLogger(AgentUtils.class);
 
+    /**
+     * 应用程序的主入口点
+     *
+     * @param args 命令行参数数组，预期至少包含两个非空字符串参数。
+     */
     public static void main(String[] args) {
-        System.out.println(args[0]);
-        System.out.println(args[1]);
+        logger.debug("args[0]={},args[1]={}", args[0], args[1]);
         try {
             if (args.length != 2
                     || StringUtils.isBlank(args[0])
                     || StringUtils.isBlank(args[1])) {
-                throw new IllegalArgumentException("illegal args");
+                throw new IllegalArgumentException("illegal args, refer to README");
             }
             AgentUtils.start(args[0], args[1]);
-        } catch (Throwable t) {
-            System.err.println("load jvm failed : " + t.getMessage());
-            System.exit(-1);
+        } catch (Exception ex) {
+            logger.error("load jvm failed", ex);
         }
-    }
-
-    void start() {
-        shutdown = new Thread("shutdown-hooker") {
-            @Override
-            public void run() {
-                Main.this.destroy();
-            }
-        };
-    }
-
-    public void destroy() {
-        SpyUtils.cleanUpSpyReference();
-        if (Objects.nonNull(shutdown)) {
-            try {
-                Runtime.getRuntime().removeShutdownHook(shutdown);
-            } catch (Throwable t) {
-                // ignore
-            }
-        }
-        Runtime.getRuntime().addShutdownHook(shutdown);
     }
 }

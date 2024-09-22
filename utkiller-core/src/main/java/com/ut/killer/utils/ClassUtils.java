@@ -7,14 +7,14 @@ import java.util.List;
 
 public class ClassUtils {
     public static List<ArgumentInfo> toArguments(Object[] args, String[] argNames) {
-        List<ArgumentInfo> argumentInfos = new ArrayList<>();
+        List<ArgumentInfo> argObjects = new ArrayList<>(args.length);
         for (int i = 0; i < args.length; i++) {
             ArgumentInfo argumentInfo = new ArgumentInfo();
             argumentInfo.setValue(args[i]);
             argumentInfo.setName(argNames[i]);
             argumentInfo.setType(args[i].getClass().getName());
-            argumentInfos.add(argumentInfo);
+            argObjects.add(argumentInfo);
         }
-        return argumentInfos;
+        return argObjects;
     }
 }

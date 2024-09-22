@@ -60,7 +60,7 @@ public class AgentUtils {
         try {
             vmObj = VirtualMachine.attach(targetJvmPid);
             if (vmObj != null) {
-                System.out.println(agentJarPath);
+                logger.info("agent path {}", agentJarPath);
                 vmObj.loadAgent(agentJarPath, agentArgs);
             }
         } catch (Exception ex) {

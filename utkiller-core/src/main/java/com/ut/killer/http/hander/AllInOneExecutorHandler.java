@@ -78,7 +78,7 @@ public class AllInOneExecutorHandler extends JsonResponseHandler {
     }
 
 
-    Map<String, Set<String>> newClass2MethodNames(Set<MethodDependency> methodDependencies) {
+    private Map<String, Set<String>> newClass2MethodNames(Set<MethodDependency> methodDependencies) {
         Map<String, Set<String>> className2MethodNames = new HashMap<>();
 
         for (MethodDependency methodDependency : methodDependencies) {

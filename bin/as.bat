@@ -9,6 +9,8 @@ set ERROR_CODE=0
 
 set BASEDIR=%~dp0
 
+echo "BASEDIR": %CORE_JAR%
+
 if ["%~1"]==[""] (
   echo Example:
   echo   %~nx0 com.imagedance.zpai.ZpaiApplication
@@ -65,7 +67,8 @@ goto exit_bat
 
 :okJava
 echo "CORE_JAR": %CORE_JAR%
-%JAVACMD% -Dfile.encoding=UTF-8 %BOOT_CLASSPATH% -jar %CORE_JAR% %MAIN_CLASS% configPath=E:\\code\\utkiller\bin\utkiller.yaml
+echo "%JAVACMD% -Dfile.encoding=UTF-8 %BOOT_CLASSPATH% -jar %CORE_JAR% %MAIN_CLASS% configPath=%BASEDIR%utkiller.yaml"
+%JAVACMD% -Dfile.encoding=UTF-8 %BOOT_CLASSPATH% -jar %CORE_JAR% %MAIN_CLASS% configPath=%BASEDIR%utkiller.yaml
 if %ERRORLEVEL% NEQ 0 goto exit_bat
 if %exitProcess%==1 goto exit_bat
 goto attachSuccess

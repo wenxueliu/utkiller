@@ -46,8 +46,6 @@ public class ClazzUtils {
         } else {
             implClasses.add(classType);
         }
-        // 获取类的实现类
-//        implClasses.add(classType);
         return implClasses;
     }
 
@@ -266,7 +264,7 @@ public class ClazzUtils {
                 }
             }
         } catch (Exception ex) {
-            logger.error("发生异常:{}", ex);
+            logger.error("发生异常: ", ex);
             throw new RuntimeException("发生异常:" + ex.getMessage());
         }
         return myClassName;

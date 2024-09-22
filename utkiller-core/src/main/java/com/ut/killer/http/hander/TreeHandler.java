@@ -13,7 +13,7 @@ import java.util.Set;
 
 public class TreeHandler extends JsonResponseHandler {
     @Override
-    public NanoHTTPD.Response handle(NanoHTTPD.IHTTPSession session) throws NotFoundException, IOException {
+    public NanoHTTPD.Response handle(NanoHTTPD.IHTTPSession session) {
         MethodDependencyRequest methodDependencyRequest = handleRequest(session, MethodDependencyRequest.class);
         MethodDependencyParser methodDependencyParser = getMethodDependencyParser(methodDependencyRequest);
         String className = methodDependencyRequest.getClassPath();

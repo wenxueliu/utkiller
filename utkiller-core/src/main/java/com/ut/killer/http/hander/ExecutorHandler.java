@@ -11,6 +11,7 @@ import java.lang.reflect.InvocationTargetException;
 
 public class ExecutorHandler extends JsonResponseHandler {
     private static final Logger logger = LoggerFactory.getLogger(ExecutorHandler.class);
+
     @Override
     public NanoHTTPD.Response handle(NanoHTTPD.IHTTPSession session) {
         try {
