@@ -171,7 +171,6 @@ public class ParameterFactory {
             // failed to construct from the canonical name,
             // happens when this is a generic type
             // so we try to construct using type from the method param class
-
         }
 
         if (typeReference == null) {
@@ -195,10 +194,8 @@ public class ParameterFactory {
                 typeReference.containedType(0) : null;
         switch (rawClassCanonicalName) {
             case "reactor.core.publisher.Mono":
-
                 parameterObject = objectFromTypeReference(methodParameter, parameterType, firstComponent);
                 parameterObject = parameterObject == null ? Mono.empty() : Mono.just(parameterObject);
-
                 break;
             case "java.util.concurrent.CompletableFuture":
                 final Object finalObj = objectFromTypeReference(methodParameter, parameterType, firstComponent);
@@ -225,7 +222,7 @@ public class ParameterFactory {
                     try {
                         parameterObject = basicObjectMapper.readValue(methodParameter, typeReference);
                         return parameterObject;
-                    }catch (Throwable ignored) {
+                    } catch (Throwable ignored) {
                         //
                     }
                     if (methodParameter.startsWith("\"") && methodParameter.endsWith("\"")) {
@@ -265,7 +262,6 @@ public class ParameterFactory {
         if ((fieldType.getModifiers() & java.lang.reflect.Modifier.FINAL) != 0) {
             return false;
         }
-
         return true;
     }
 
@@ -273,40 +269,40 @@ public class ParameterFactory {
         if (classNameToBeConstructed == null) {
             return null;
         }
+
         if (classNameToBeConstructed.endsWith("[]")) {
+            // 处理数组类型
             JavaType subType = getTypeReference(typeFactory, classNameToBeConstructed.substring(0,
                     classNameToBeConstructed.length() - 2));
             return typeFactory.constructArrayType(subType);
         }
-        switch (classNameToBeConstructed) {
-            case "J":
-            case "long":
-                return typeFactory.constructType(long.class);
-            case "Z":
-            case "boolean":
-                return typeFactory.constructType(boolean.class);
-            case "I":
-            case "integer":
-                return typeFactory.constructType(int.class);
-            case "B":
-            case "byte":
-                return typeFactory.constructType(byte.class);
-            case "C":
-            case "char":
-                return typeFactory.constructType(char.class);
-            case "F":
-            case "float":
-                return typeFactory.constructType(float.class);
-            case "S":
-            case "short":
-                return typeFactory.constructType(short.class);
-            case "D":
-            case "double":
-                return typeFactory.constructType(double.class);
-            case "V":
-            case "void":
-                return typeFactory.constructType(void.class);
-        }
-        return typeFactory.constructFromCanonical(classNameToBeConstructed);
+
+        Map<String, JavaType> primitiveTypes = getPrimitiveJavaTypes(typeFactory);
+
+        return primitiveTypes.getOrDefault(classNameToBeConstructed, typeFactory.constructFromCanonical(classNameToBeConstructed))
+    }
+
+    private static Map<String, JavaType> getPrimitiveJavaTypes(TypeFactory typeFactory) {
+        // 映射原始类型名称到对应的 Class 类型
+        Map<String, JavaType> primitiveTypes = new HashMap<>();
+        primitiveTypes.put("J", typeFactory.constructType(long.class));
+        primitiveTypes.put("long", typeFactory.constructType(long.class));
+        primitiveTypes.put("Z", typeFactory.constructType(boolean.class));
+        primitiveTypes.put("boolean", typeFactory.constructType(boolean.class));
+        primitiveTypes.put("I", typeFactory.constructType(int.class));
+        primitiveTypes.put("integer", typeFactory.constructType(int.class));
+        primitiveTypes.put("B", typeFactory.constructType(byte.class));
+        primitiveTypes.put("byte", typeFactory.constructType(byte.class));
+        primitiveTypes.put("C", typeFactory.constructType(char.class));
+        primitiveTypes.put("char", typeFactory.constructType(char.class));
+        primitiveTypes.put("F", typeFactory.constructType(float.class));
+        primitiveTypes.put("float", typeFactory.constructType(float.class));
+        primitiveTypes.put("S", typeFactory.constructType(short.class));
+        primitiveTypes.put("short", typeFactory.constructType(short.class));
+        primitiveTypes.put("D", typeFactory.constructType(double.class));
+        primitiveTypes.put("double", typeFactory.constructType(double.class));
+        primitiveTypes.put("V", typeFactory.constructType(void.class));
+        primitiveTypes.put("void", typeFactory.constructType(void.class));
+        return primitiveTypes;
     }
 }

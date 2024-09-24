@@ -10,24 +10,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
 
-/**
- * @author ralf0131 2017-01-06 16:02.
- */
+
 public class AbstractTraceAdviceListener extends AdviceListenerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(AbstractTraceAdviceListener.class);
 
     protected final ThreadLocal<TraceEntity> threadBoundEntity = new ThreadLocal<>();
 
-    /**
-     * Constructor
-     */
     public AbstractTraceAdviceListener() {
     }
 
     protected TraceEntity threadLocalTraceEntity(ClassLoader loader) {
         TraceEntity traceEntity = threadBoundEntity.get();
-        if (traceEntity == null) {
+        if (Objects.isNull(traceEntity)) {
             traceEntity = new TraceEntity(loader);
             threadBoundEntity.set(traceEntity);
         }
@@ -42,9 +38,8 @@ public class AbstractTraceAdviceListener extends AdviceListenerAdapter {
     @Override
     public void before(ClassLoader loader, Class<?> clazz, ArthasMethod method, Object target, List<ArgumentInfo> args)
             throws Throwable {
-        // TODO 如果是私有方法，并且和 root 是同一个类，就继续，否则，结束
         TraceEntity traceEntity = threadLocalTraceEntity(loader);
-        final Advice advice = Advice.newForBefore(loader, clazz, method, target, args);
+        Advice advice = Advice.newForBefore(loader, clazz, method, target, args);
         traceEntity.tree.begin(advice, -1, false);
         traceEntity.deep++;
     }
@@ -52,7 +47,7 @@ public class AbstractTraceAdviceListener extends AdviceListenerAdapter {
     @Override
     public void afterReturning(ClassLoader loader, Class<?> clazz, ArthasMethod method, Object target, List<ArgumentInfo> args,
                                Object returnObject) throws Throwable {
-        final Advice advice = Advice.newForAfterReturning(loader, clazz, method, target, args, returnObject);
+        Advice advice = Advice.newForAfterReturning(loader, clazz, method, target, args, returnObject);
         threadLocalTraceEntity(loader).tree.end(advice, -1);
         finishing(loader, advice);
     }
@@ -65,7 +60,7 @@ public class AbstractTraceAdviceListener extends AdviceListenerAdapter {
         if (stackTrace.length != 0) {
             lineNumber = stackTrace[0].getLineNumber();
         }
-        final Advice advice = Advice.newForAfterThrowing(loader, clazz, method, target, args, throwable);
+        Advice advice = Advice.newForAfterThrowing(loader, clazz, method, target, args, throwable);
 
         threadLocalTraceEntity(loader).tree.end(advice, throwable, lineNumber);
         finishing(loader, advice);

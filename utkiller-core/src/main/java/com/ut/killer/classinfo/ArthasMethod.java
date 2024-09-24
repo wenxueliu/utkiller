@@ -1,7 +1,7 @@
 package com.ut.killer.classinfo;
 
 import com.alibaba.deps.org.objectweb.asm.Type;
-import com.ut.killer.command.StringUtils;
+import com.ut.killer.utils.StringUtils;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

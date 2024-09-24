@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ut.killer.command;
+package com.ut.killer.utils;
 
 
 import org.slf4j.Logger;
@@ -31,6 +31,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public abstract class StringUtils {
     private static final Logger logger = LoggerFactory.getLogger(StringUtils.class);
     private static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+    public static final String EMPTY_STRING = "";
 
     /**
      * 获取异常的原因描述
@@ -53,7 +55,7 @@ public abstract class StringUtils {
      */
     public static String objectToString(Object obj) {
         if (null == obj) {
-            return Constants.EMPTY_STRING;
+            return EMPTY_STRING;
         }
         try {
             return obj.toString();
@@ -98,7 +100,7 @@ public abstract class StringUtils {
 
     public static String concat(String separator, Class<?>... types) {
         if (types == null || types.length == 0) {
-            return Constants.EMPTY_STRING;
+            return EMPTY_STRING;
         }
 
         StringBuilder builder = new StringBuilder();
@@ -114,7 +116,7 @@ public abstract class StringUtils {
 
     public static String concat(String separator, String... strs) {
         if (strs == null || strs.length == 0) {
-            return Constants.EMPTY_STRING;
+            return EMPTY_STRING;
         }
 
         StringBuilder builder = new StringBuilder();
@@ -437,7 +439,7 @@ public abstract class StringUtils {
             return str;
         }
         if (separator.isEmpty()) {
-            return Constants.EMPTY_STRING;
+            return EMPTY_STRING;
         }
         final int pos = str.indexOf(separator);
         if (pos == -1) {
@@ -792,7 +794,7 @@ public abstract class StringUtils {
             return null;
         }
         if (repeat <= 0) {
-            return Constants.EMPTY_STRING;
+            return EMPTY_STRING;
         }
         final int inputLength = str.length();
         if (repeat == 1 || inputLength == 0) {

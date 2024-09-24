@@ -1,6 +1,5 @@
 package com.ut.killer.utils;
 
-import com.ut.killer.command.StringUtils;
 import com.ut.killer.execute.matcher.Matcher;
 import com.ut.killer.execute.matcher.RegexMatcher;
 import com.ut.killer.execute.matcher.WildcardMatcher;

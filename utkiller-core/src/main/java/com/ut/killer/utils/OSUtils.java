@@ -1,7 +1,5 @@
 package com.ut.killer.utils;
 
-import com.ut.killer.execute.PlatformEnum;
-
 import java.util.Locale;
 
 public class OSUtils {

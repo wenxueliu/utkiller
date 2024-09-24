@@ -3,22 +3,13 @@ package com.ut.killer.command;
 
 import com.ut.killer.classinfo.ArgumentInfo;
 import com.ut.killer.utils.ClassUtils;
+import com.ut.killer.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ut.killer.SpyAPI;
 
 import java.util.List;
 
-/**
- * <pre>
- * 怎么从 className|methodDesc 到 id 对应起来？？
- * 当id少时，可以id自己来判断是否符合？
- *
- * 如果是每个 className|methodDesc 为 key ，是否
- * </pre>
- *
- * @author hengyunabc 2020-04-24
- */
 public class SpyImpl extends SpyAPI.AbstractSpy {
     private static final Logger logger = LoggerFactory.getLogger(SpyImpl.class);
 

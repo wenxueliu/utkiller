@@ -1,6 +1,6 @@
 package com.ut.killer.classinfo;
 
-import com.ut.killer.command.StringUtils;
+import com.ut.killer.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

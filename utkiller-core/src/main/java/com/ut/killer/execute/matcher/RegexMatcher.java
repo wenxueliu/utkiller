@@ -1,11 +1,6 @@
 package com.ut.killer.execute.matcher;
 
-/**
- * regex matcher
- * @author ralf0131 2017-01-06 13:16.
- */
 public class RegexMatcher implements Matcher<String> {
-
     private final String pattern;
 
     public RegexMatcher(String pattern) {

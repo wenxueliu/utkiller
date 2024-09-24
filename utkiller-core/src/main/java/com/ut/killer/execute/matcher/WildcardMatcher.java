@@ -1,23 +1,15 @@
 package com.ut.killer.execute.matcher;
 
-/**
- * wildcard matcher
- * @author ralf0131 2017-01-06 13:17.
- */
 public class WildcardMatcher implements Matcher<String> {
-
     private final String pattern;
 
     private static final Character ASTERISK = '*';
     private static final Character QUESTION_MARK = '?';
     private static final Character ESCAPE = '\\';
 
-
-
     public WildcardMatcher(String pattern) {
         this.pattern = pattern;
     }
-
 
     @Override
     public boolean matching(String target) {
