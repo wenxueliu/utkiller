@@ -1,7 +1,11 @@
 package ut.killer;
 
+import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 /**
  * 启动 Java Agent 的工具类。
@@ -37,11 +41,18 @@ public class AgentLauncher {
         UTKillerConfiguration config = YamlUtils.parse(configPath);
         String namespace = config.getNamespace();
         try {
-            ClassLoader classLoader = ClassLoaderManager.getOrDefine(namespace, Thread.currentThread().getContextClassLoader());
+            ClassLoader customerLoader = addCoreJarToClassLoader(config);
+            ClassLoader classLoader = ClassLoaderManager.getOrDefine(namespace, customerLoader);
             start(inst, classLoader, config);
         } catch (Throwable cause) {
             throw new RuntimeException("utkiller attach failed.", cause);
         }
+    }
+
+    protected static ClassLoader addCoreJarToClassLoader(UTKillerConfiguration config) throws MalformedURLException {
+        String baseDir = config.getBaseDir();
+        URL[] urls = new URL[]{ new URL("file:" + baseDir + File.separator + "utkiller-core.jar") };
+        return new URLClassLoader(urls, Thread.currentThread().getContextClassLoader());
     }
 
     private static void start(Instrumentation inst, ClassLoader classLoader, UTKillerConfiguration config) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {

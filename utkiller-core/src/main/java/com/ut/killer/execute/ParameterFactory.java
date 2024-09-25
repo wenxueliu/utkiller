@@ -279,7 +279,7 @@ public class ParameterFactory {
 
         Map<String, JavaType> primitiveTypes = getPrimitiveJavaTypes(typeFactory);
 
-        return primitiveTypes.getOrDefault(classNameToBeConstructed, typeFactory.constructFromCanonical(classNameToBeConstructed))
+        return primitiveTypes.getOrDefault(classNameToBeConstructed, typeFactory.constructFromCanonical(classNameToBeConstructed));
     }
 
     private static Map<String, JavaType> getPrimitiveJavaTypes(TypeFactory typeFactory) {

@@ -32,10 +32,6 @@ public class AgentUtils {
     public static void start(String mainClassPath, String agentArgs) throws Exception {
         logger.info("agent attach start");
         correctToolsLoadedOrder();
-        String configPath = ArgsUtils.toMap(agentArgs).getOrDefault("configPath", "");
-        UTKillerConfiguration config = YamlUtils.parse(configPath);
-        String baseDir = config.getBaseDir();
-//        File agentJar = AgentUtils.loadJavaAgentJarFile(baseDir);
         File agentJar = createJavaAgentJarFile();
         attachAgent(mainClassPath, agentJar.getAbsolutePath(), agentArgs);
         logger.info("agent attach end");
@@ -113,10 +109,6 @@ public class AgentUtils {
             }
         }
         return linuxToolsJarIndex;
-    }
-
-    public static File loadJavaAgentJarFile(String baseDir) {
-        return new File(baseDir + File.separator + "utkiller-agent.jar");
     }
 
     /**
