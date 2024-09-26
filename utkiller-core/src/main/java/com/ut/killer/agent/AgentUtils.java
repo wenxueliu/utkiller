@@ -7,21 +7,20 @@ import javassist.CtClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.URLClassPath;
-import ut.killer.*;
+import ut.killer.config.UTKillerConfiguration;
+import ut.killer.utils.ArgsUtils;
+import ut.killer.utils.YamlUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Objects;
-import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
 
 public class AgentUtils {
     private static final Logger logger = LoggerFactory.getLogger(AgentUtils.class);
@@ -32,7 +31,10 @@ public class AgentUtils {
     public static void start(String mainClassPath, String agentArgs) throws Exception {
         logger.info("agent attach start");
         correctToolsLoadedOrder();
-        File agentJar = createJavaAgentJarFile();
+        String configPath = ArgsUtils.toMap(agentArgs).getOrDefault("configPath", "");
+        UTKillerConfiguration config = YamlUtils.parse(configPath);
+        String baseDir = config.getBaseDir();
+        File agentJar = loadJavaAgentJarFile(baseDir);
         attachAgent(mainClassPath, agentJar.getAbsolutePath(), agentArgs);
         logger.info("agent attach end");
     }
@@ -118,31 +120,35 @@ public class AgentUtils {
      * @return 包含 Java agent 的 JAR 文件的 {@code File} 对象。
      * @throws Exception 如果创建 JAR 文件过程中出现任何错误，则抛出此异常。
      */
-    public static File createJavaAgentJarFile() throws Exception {
+    public static File createJavaAgentJarFile2() throws Exception {
         File jar = File.createTempFile("agent", ".jar");
-        jar.deleteOnExit();
-        Manifest manifest = buildeManifest();
-        try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(jar.toPath()), manifest)) {
-            writeClassFile(AgentLauncher.class, jos);
-            writeClassFile(ArgsUtils.class, jos);
-            writeClassFile(ClassLoaderManager.class, jos);
-            writeClassFile(UTKillerConfiguration.class, jos);
-            writeClassFile(YamlUtils.class, jos);
-            writeClassFile(ClassPool.class, jos);
-            writeClassFile(CtClass.class, jos);
-        }
+//        jar.deleteOnExit();
+//        Manifest manifest = buildeManifest();
+//        try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(jar.toPath()), manifest)) {
+//            writeClassFile(AgentLauncher.class, jos);
+//            writeClassFile(ArgsUtils.class, jos);
+//            writeClassFile(ClassLoaderManager.class, jos);
+//            writeClassFile(UTKillerConfiguration.class, jos);
+//            writeClassFile(YamlUtils.class, jos);
+//            writeClassFile(ClassPool.class, jos);
+//            writeClassFile(CtClass.class, jos);
+//        }
         return jar;
     }
 
-    private static Manifest buildeManifest() {
-        Manifest manifest = new Manifest();
-        Attributes attrs = manifest.getMainAttributes();
-        attrs.put(Attributes.Name.MANIFEST_VERSION, "1.0");
-        attrs.put(new Attributes.Name("Agent-Class"), AgentLauncher.class.getName());
-        attrs.put(new Attributes.Name("Can-Retransform-Classes"), "true");
-        attrs.put(new Attributes.Name("Can-Redefine-Classes"), "true");
-        return manifest;
+    public static File loadJavaAgentJarFile(String baseDir) {
+        return new File(baseDir + File.separator + "utkiller-agent.jar");
     }
+
+//    private static Manifest buildeManifest() {
+//        Manifest manifest = new Manifest();
+//        Attributes attrs = manifest.getMainAttributes();
+//        attrs.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+//        attrs.put(new Attributes.Name("Agent-Class"), AgentLauncher.class.getName());
+//        attrs.put(new Attributes.Name("Can-Retransform-Classes"), "true");
+//        attrs.put(new Attributes.Name("Can-Redefine-Classes"), "true");
+//        return manifest;
+//    }
 
     private static void writeClassFile(Class<?> clz, JarOutputStream jos) throws Exception {
         String cname = clz.getName();

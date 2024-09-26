@@ -14,6 +14,10 @@
       <destName>../../../bin/utkiller-spy.jar</destName>
     </file>
     <file>
+      <source>../utkiller-common/target/utkiller-common-${project.version}.jar</source>
+      <destName>../../../bin/utkiller-common.jar</destName>
+    </file>
+    <file>
       <source>../utkiller-core/target/utkiller-core-shade-${project.version}.jar</source>
       <destName>../../../bin/utkiller-core.jar</destName>
     </file>

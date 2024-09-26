@@ -7,7 +7,8 @@ import fi.iki.elonen.NanoHTTPD;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ut.killer.SpyAPI;
-import ut.killer.UTKillerConfiguration;
+import ut.killer.config.UTKillerConfiguration;
+import ut.killer.utils.YamlUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +57,8 @@ public class HttpAgentServer extends NanoHTTPD {
                 + "\nqueryString: " + queryString + "\npostData: " + postData));
     }
 
-    public static void begin(UTKillerConfiguration config, Instrumentation inst) throws Throwable {
+    public static void begin(String configPath, Instrumentation inst) throws Throwable {
+        UTKillerConfiguration config = YamlUtils.parse(configPath);
         int port = config.getPort();
         String baseDir = config.getBaseDir();
         if (inst == null) {

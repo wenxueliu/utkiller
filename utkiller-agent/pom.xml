@@ -20,9 +20,14 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>1.33</version>
+            <groupId>ut.killer</groupId>
+            <artifactId>utkiller-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ut.killer</groupId>
+            <artifactId>utkiller-core</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 

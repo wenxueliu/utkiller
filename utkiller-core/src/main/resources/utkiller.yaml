@@ -1,4 +1,4 @@
-baseDir: F:\\code\utkiller\bin
+baseDir: F:\code\utkiller\bin
 namespace: default
 port: 9999
 includePackages:

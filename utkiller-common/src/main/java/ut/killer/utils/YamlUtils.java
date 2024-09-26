@@ -1,7 +1,8 @@
-package ut.killer;
+package ut.killer.utils;
 
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
+import ut.killer.config.UTKillerConfiguration;
 
 import java.io.InputStream;
 import java.nio.file.Files;

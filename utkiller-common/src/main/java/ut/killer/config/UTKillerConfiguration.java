@@ -1,4 +1,4 @@
-package ut.killer;
+package ut.killer.config;
 
 import java.util.List;
 
