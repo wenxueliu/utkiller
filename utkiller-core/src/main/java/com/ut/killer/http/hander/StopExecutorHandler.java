@@ -58,7 +58,5 @@ public class StopExecutorHandler extends JsonResponseHandler {
             EnhanceManager.remove(className);
             ClassManager.removeClass(className);
         }
-//        instrumentation.addTransformer(new ByteTransformer(targetClassNames, newClass2MethodNames), true);
-//        instrumentation.retransformClasses(targetClasses.toArray(new Class[0]));
     }
 }
